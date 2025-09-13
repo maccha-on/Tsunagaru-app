@@ -2,12 +2,12 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 
-git init
-git add .
-git commit -m "first commit"
-git branch -M main
-git remote add origin 皆さんのレポジトリー名
-git push -u origin main
+# git init
+# git add .
+# git commit -m "first commit"
+# git branch -M main
+# git remote add origin https://github.com/maccha-on/s2-2-team7.git
+# git push -u origin main
 
 
 

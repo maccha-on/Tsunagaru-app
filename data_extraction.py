@@ -9,7 +9,7 @@ import os
 # 同ディレクトリにある DB.csvを読み込む。
 # DB.csvには、ニックネーム、自己紹介文、個人webページURLが掛かれている。
 # そこから趣味・特徴を抽出して、out.csvに出力するプログラム。
-# 
+# まっと注）DB.csvは実際に使う適切なファイル名にあとで修正
 # #########################################################
 
 
@@ -35,8 +35,8 @@ client = OpenAI(api_key=api_key)
 
 # ######### 関数定義 ##########
 
-# 自己紹介文からキーワードを抽出する関数。
-# 引数：自己紹介文
+# 与えられたテキストからキーワードを抽出する関数。
+# 引数：Notion自己紹介文(Introduction)とLPからスクレイピングしたテキスト群(LP_text)
 # exclude_keywords に既存のキーワードを渡すと、それらを除外するようGPTへ指示します。
 def run_gpt_intro_to_keywords(text, exclude_keywords=None, label='Introduction'):
     if text is None or pd.isna(text):
@@ -67,6 +67,9 @@ def run_gpt_intro_to_keywords(text, exclude_keywords=None, label='Introduction')
         f"\n\n#データ\n{text}"
     )
     response = client.chat.completions.create(
+        # モデル選択
+        # 5-nanoから4o-miniに変更しています。
+        # 5-nanoだと、謎キーワードがいくつか生じる印象
         model="gpt-4o-mini",
         messages=[
             {"role": "user", "content": request_to_gpt},
@@ -98,6 +101,7 @@ def has_text(value):
     return True
 
 # 特徴データをまとめたcsv(out.csv)を生成
+# パターン1を採用：まずはnotion自己紹介文からキーワード抽出し、さらにLP掲載テキストからnotion自己紹介文に含まれないキーワードを追加抽出
 # (注)何度も使うとAPI利用料がかさむかもなので、必要最小限で。
 processed_count = 0
 for index, row in input_df.iterrows():

@@ -29,10 +29,9 @@ def find_major_commons(name, client):
     # ファイルが存在するかチェック
     if csv_path.exists():
         # CSVを読み込む
-        df = pd.read_csv(csv_path)
+        data_txt = str(pd.read_csv(csv_path))
     else:
-        # CSVがない場合は文字列を格納
-        df = "member_data"
+        data_txt = "MEMBER_DATA"
     
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
@@ -40,7 +39,7 @@ def find_major_commons(name, client):
         f"各共通点については、誰と共通しているのかも説明してください。"
         f"回答は、最大でも300字程度にしてください。"
         f"メンバーとその特徴は、以下のとおりです。\n\n"
-        f"{str(df)}"
+        f"{data_txt}"
         )
     # 決めた内容を元にchatGPTへリクエスト
     response =  client.chat.completions.create(

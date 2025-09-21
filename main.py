@@ -119,10 +119,10 @@ with tab1:
     st.header("共通点タブ")
     col1,col2=st.columns(2)
     with col1:
-        st.write("共通点のある人-１人目")
+        st.write("みんなとの共通点")
         st.write(out_text1)
     with col2:
-        st.write("共通点のある人-２人目")
+        st.write("共通点のある人")
         st.write(out_text2)
 tab2.write("いいい")
 tab3.write("ううう")

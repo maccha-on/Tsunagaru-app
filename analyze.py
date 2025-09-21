@@ -25,13 +25,13 @@ from pathlib import Path
 def find_major_commons(name, client):
     # データファイルの読み込み
     # 現状は特徴を詰め込んだだけのout.csvを利用
-    csv_path = Path(__file__).resolve().parent / "out.csv"
-    # ファイルが存在するかチェック
-    if csv_path.exists():
-        # CSVを読み込む
-        data_txt = str(pd.read_csv(csv_path))
-    else:
+    try:
+        # Cloud環境なら st.secrets["DATA"] が使える
         data_txt = st.secrets["MEMBER_DATA"]
+        print('secretsから取得')
+    except Exception:
+        data_txt = str(pd.read_csv("out.csv"))
+        print('out.csvから取得')
          
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
@@ -60,14 +60,14 @@ def find_major_commons(name, client):
 #      直前のクライアントで、データファイルは読み込み済みが前提。
 def find_similar_person(name, client):
     # データファイルの読み込み
-    # 現状は特徴を詰め込んだだけのout.csvを利用
-    csv_path = Path(__file__).resolve().parent / "out.csv"
-    # ファイルが存在するかチェック
-    if csv_path.exists():
-        # CSVを読み込む
-        data_txt = str(pd.read_csv(csv_path))
-    else:
+    try:
+        # Cloud環境なら st.secrets["DATA"] が使える
         data_txt = st.secrets["MEMBER_DATA"]
+        print('secretsから取得')
+    except Exception:
+        data_txt = str(pd.read_csv("out.csv"))
+        print('out.csvから取得')
+
         
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (

@@ -21,16 +21,6 @@ load_dotenv()
 # 分析用プログラムの読み込み
 import analyze 
 
-# よこさんへ
-# デザインは、よこさんのコードに丸ごと置き替えでokだと思います。
-# GPT初期設定の2行の命令と、最後の2行の共通点のある人を探す関数(find_commons)を呼びだすところは、
-# 残しておく必要があります。
-#
-# 余力あれば... 以下ご検討いただけるとうれしいです。
-# - find_commmonsの戻り値について、現状のテキスト(str)形式ではなくて、
-#   pandas表形式で共通趣味のあるメンバーを返す形式でも出力できるか？
-# - マップ生成は、どんな入力や中間データがあれば生成できそうか？
-
 
 # 25/09/21修正
 # ChatGPTクライアントを起動するモジュール
@@ -74,7 +64,7 @@ operation_mode_of = {mode_1,mode_2,mode_3}
 
 
 ###↓↓↓ サイドバー ここから↓↓↓###
-st.sidebar.title("ほにゃららアプリ")
+st.sidebar.title("つながるアプリ")
 st.sidebar.caption("アプリの説明")
 # st.sidebar.write("どんな繋がりを見つける？")
 # st.sidebar.pills("選んでください。：",["共通点探し","特徴探し","その他"])
@@ -101,11 +91,11 @@ st.sidebar.button("探そう！")
 ###↑↑↑ サイドバー ここまで ↑↑↑###
 
 
+
 # トップ画像 or キャラクター
 st.image("http://marvel-force-chart.surge.sh/marvel_force_chart_img/top_ironman.png", caption="キャラクターなど表示")
 
-st.write("開発メモ: 現在は以下のメンバーに対応しています。")
-st.write("まっちゃん,よこ,まっと,あらぴー,まる,けーすけ,りいちろー,りょーま,えーちゃん")
+st.write("開発メモ: 現在は以下のメンバーに対応しています。\nまっちゃん,よこ,まっと,あらぴー,まる,けーすけ,りいちろー,りょーま,えーちゃん")
 
 # データ分析を実行
 # ユーザー名を引数に渡して、共通点を探した結果をテキストで返す
@@ -128,35 +118,3 @@ tab2.write("いいい")
 tab3.write("ううう")
 
 
-
-
-
-
-
-
-######以下、まっちゃんコード　ここから######
-# # 動作モードの定義
-# mode_1 = "私と共通点のある人を見つける"
-# mode_2 = "工事中。Comming Soon"
-# mode_3 = "工事中。Comming Soon."
-# operation_mode_of = {mode_1,mode_2,mode_3}
-
-# ## Streamlit 表示用コード ###
-# st.sidebar.title('ほにゃららアプリ ＃名前募集中') 
-
-# # 動作モードの選択
-# operation_mode = st.sidebar.write("どんな繋がりを見つける？",options=operation_mode_of)
-# # メンバー情報の読み込み
-# st.sidebar.write('ここにDBファイルをアップロード？（今回はローカルの(DB_sample.csv)を使う仕様）')
-# # トップ画像 or キャラクター
-# st.image("https://www.xxxx/image.jpg", caption="キャラクターなど表示")
-# # ニックネームを入力してもらう
-# st.write('あなたのニックネームは？')
-# user_name = st.text_input("ニックネームを入力")
-
-# # データ分析を実行
-# # ユーザー名を引数に渡して、共通点を探した結果をテキストで返す
-# out_text = find_commons(user_name, client)
-# # 画面上に結果を出力
-# st.write(out_text)
-######以上、まっちゃんコード　ここまで######

@@ -37,6 +37,7 @@ client = OpenAI(api_key=api_key)
 
 # 与えられたテキストからキーワードを抽出する関数。
 # 引数：Notion自己紹介文(Introduction)とLPからスクレイピングしたテキスト群(LP_text)
+# exclude_keywords に既存のキーワードを渡すと、それらを除外するようGPTへ指示します。
 def run_gpt_intro_to_keywords(text, exclude_keywords=None, label='Introduction'):
     if text is None or pd.isna(text):
         return ''
@@ -76,6 +77,7 @@ def run_gpt_intro_to_keywords(text, exclude_keywords=None, label='Introduction')
     )
     output_content = response.choices[0].message.content.strip()
     return output_content
+
 
 ########### これ以下が実行コード #############
 

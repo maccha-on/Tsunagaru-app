@@ -59,13 +59,23 @@ def find_major_commons(name, client):
 #      *スクリプト意外はfind_commonsと同じ。
 #      直前のクライアントで、データファイルは読み込み済みが前提。
 def find_similar_person(name, client):
-
+    # データファイルの読み込み
+    # 現状は特徴を詰め込んだだけのout.csvを利用
+    csv_path = Path(__file__).resolve().parent / "out.csv"
+    # ファイルが存在するかチェック
+    if csv_path.exists():
+        # CSVを読み込む
+        data_txt = str(pd.read_csv(csv_path))
+    else:
+        data_txt = "MEMBER_DATA"
+        
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
-        f"「{name}」と、多くの共通点があるメンバーを3人ほど教えてください。"
+        f"「{name}」と、多くの共通点がある人を2～3人教えてください。"
         f"回答形式については、共通点の多いメンバーの名前を書き、共通や類似するポイントを箇条書きで教えてください。"
         f"回答は、最大でも300文字程度としてください。"
-        f"メンバーについては、先ほどと同じです。\n\n"
+        f"メンバーとその特徴は、以下のとおりです。\n\n"
+        f"{data_txt}"
         )
     # 決めた内容を元にchatGPTへリクエスト
     response =  client.chat.completions.create(

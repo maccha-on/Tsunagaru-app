@@ -32,14 +32,33 @@ import analyze
 # - マップ生成は、どんな入力や中間データがあれば生成できそうか？
 
 
-## GPT初期設定。 main.py内で使わなくても必要。
+# 25/09/21修正
+# ChatGPTクライアントを起動するモジュール
+# APIキーをstreamlit上から拾ってくるコードに差し替え
+def get_api_key(env_key: str = "OPENAI_API_KEY") -> str | None:
+    # 環境変数優先で API キーを取得。secrets は存在しない環境でも例外にならないように参照。
+    key = os.getenv(env_key)
+    if key:
+        return key
+    try:
+        return st.secrets[env_key]  # secrets.toml が無い場合もあるため例外安全にする
+    except Exception:
+        return None
+api_key = get_api_key()
 
-# openAIの機能をclientに代入
+if not api_key:
+    st.error(
+        "OpenAI APIキーが見つかりません。\n\n"
+        "■ 推奨（ローカル学習向け）\n"
+        "  1) .env を作成し OPENAI_API_KEY=sk-xxxx を記載\n"
+        "  2) このアプリを再実行\n\n"
+        "■ 参考（secrets を使う場合）\n"
+        "  .streamlit/secrets.toml に OPENAI_API_KEY を記載（※リポジトリにコミットしない）\n"
+        "  公式: st.secrets / secrets.toml の使い方はドキュメント参照"
+    )
+    st.stop()
+    # ノートブック上では停止しません。実アプリでは st.stop() します。
 
-
-# 25/09/20 追加 まっちゃん
-# GPTクライアントを初回のみ生成され、その後は同じインスタンスを返すように変更
-api_key = os.getenv("OPENAI_API_KEY")
 
 @st.cache_resource
 def get_openai_client():

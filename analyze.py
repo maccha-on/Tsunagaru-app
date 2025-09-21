@@ -3,6 +3,7 @@ import pandas as pd
 import requests #JSON用
 from openai import OpenAI
 import os
+from pathlib import Path
 
 # ######################## analyze.pyの説明 ##########################
 # 
@@ -24,8 +25,15 @@ import os
 def find_major_commons(name, client):
     # データファイルの読み込み
     # 現状は特徴を詰め込んだだけのout.csvを利用
-    df = pd.read_csv("out.csv")
-
+    csv_path = Path(__file__).resolve().parent / "out.csv"
+    # ファイルが存在するかチェック
+    if csv_path.exists():
+        # CSVを読み込む
+        df = pd.read_csv(csv_path)
+    else:
+        # CSVがない場合は文字列を格納
+        df = "member_data"
+    
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
         f"「{name}」が持つ特徴について、多くの人と共通するものを最大３つほど教えてください。"
@@ -50,8 +58,8 @@ def find_major_commons(name, client):
 # 解説：選んだユーザー起点に、共通点を見つける関数
 #      いちばん共通点が多そうな人をを出力する。
 #      *スクリプト意外はfind_commonsと同じ。
-def find_similar_person(name, client):
-    df = pd.read_csv("out.csv")
+#      直前のクライアントで、データファイルは読み込み済みが前提。
+def find_similar_person(name, client, df):
 
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (

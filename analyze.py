@@ -31,8 +31,8 @@ def find_major_commons(name, client):
         # CSVを読み込む
         data_txt = str(pd.read_csv(csv_path))
     else:
-        data_txt = "MEMBER_DATA"
-    
+        data_txt = st.secrets["MEMBER_DATA"]
+         
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
         f"「{name}」が持つ特徴について、多くの人と共通するものを最大３つほど教えてください。"
@@ -67,7 +67,7 @@ def find_similar_person(name, client):
         # CSVを読み込む
         data_txt = str(pd.read_csv(csv_path))
     else:
-        data_txt = "MEMBER_DATA"
+        data_txt = st.secrets["MEMBER_DATA"]
         
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (

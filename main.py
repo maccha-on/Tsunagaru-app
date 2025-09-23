@@ -97,11 +97,15 @@ st.image("http://marvel-force-chart.surge.sh/marvel_force_chart_img/top_ironman.
 
 st.write("開発メモ: 現在は以下のメンバーに対応しています。\nまっちゃん,よこ,まっと,あらぴー,まる,けーすけ,りいちろー,りょーま,えーちゃん")
 
+# 25.09.23 まつ変更 空白の場合は結果を出さないように変更
 # データ分析を実行
 # ユーザー名を引数に渡して、共通点を探した結果をテキストで返す
-out_text1 = analyze.find_major_commons(user_name, client)
-out_text2 = analyze.find_similar_person(user_name, client)
-# 画面上に結果を出力
+if not user_name == "":
+    out_text1 = analyze.find_major_commons(user_name, client)
+    out_text2 = analyze.find_similar_person(user_name, client)
+else:
+    out_text1 = ""
+    out_text2 = ""
 
 # 画面上に結果を出力
 tab1, tab2, tab3 = st.tabs(["共通点","特徴","相関"])

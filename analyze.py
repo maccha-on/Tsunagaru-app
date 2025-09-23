@@ -33,7 +33,7 @@ def find_major_commons(name, client):
         p = Path(__file__).parent / "out.csv"
         if p.exists():
             data_txt = str(pd.read_csv("out.csv"))
-            st.write('ローカルcsvから取得中...')
+            st.sidebar.caption('ローカルcsvから取得中...')
          
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (

@@ -56,69 +56,104 @@ def get_openai_client():
 client = get_openai_client()
 
 
-# 動作モードの選択
+# 動作モードの選択　# 09/23よこ修正
 mode_1 = "共通点探し"
-mode_2 = "工事中。Comming Soon"
-mode_3 = "工事中。Comming Soon."
+mode_2 = "特徴。Comming Soon"
+mode_3 = "相関図。Comming Soon."
 operation_mode_of = {mode_1,mode_2,mode_3}
 
+#-------------------------------
+#  　　　サイドバー ここから　　　　
+#-------------------------------
+with st.sidebar:
+    st.title("つながるアプリ")
+    st.caption("アプリの説明")
+    # st.sidebar.write("どんな繋がりを見つける？")
+    # st.sidebar.pills("選んでください。：",["共通点探し","特徴探し","その他"])
+    operation_mode = st.selectbox("どんな繋がりを見つける？", options=operation_mode_of)
+    #coice = st.sidebar.radio("選んでください。：",["共通点探し","特徴探し","その他"])
 
-###↓↓↓ サイドバー ここから↓↓↓###
-st.sidebar.title("つながるアプリ")
-st.sidebar.caption("アプリの説明")
-# st.sidebar.write("どんな繋がりを見つける？")
-# st.sidebar.pills("選んでください。：",["共通点探し","特徴探し","その他"])
-operation_mode = st.sidebar.selectbox("どんな繋がりを見つける？", options=operation_mode_of)
-#coice = st.sidebar.radio("選んでください。：",["共通点探し","特徴探し","その他"])
+    #mode_1:共通点探しを選択した場合のサイドバー表示
+    if operation_mode == mode_1:
+        st.write("あなたの仲間について教えて")
+        # ニックネームを入力してもらう
+        st.caption('あなたのニックネームは？')
+        user_name = st.text_input("ニックネームを入力")
+        # st.sidebar.selectbox("選んでください。：",["AAA(固定値)","BBB","CCC"])
 
-st.sidebar.write("あなたの仲間について教えて")
-# ニックネームを入力してもらう
-st.sidebar.caption('あなたのニックネームは？')
-user_name = st.sidebar.text_input("ニックネームを入力")
-# st.sidebar.selectbox("選んでください。：",["AAA(固定値)","BBB","CCC"])
+    #mode_2:特徴探しを選択した場合のサイドバー表示
+    elif operation_mode == mode_2:
+        st.write("探したい特徴を入力して")
+        # 特徴を入力してもらう
+        st.caption('調べたい特徴は？')
+        user_name = st.text_input("特徴を入力")
+        #user_features = st.text_input("特徴を入力")
+
+    #mode_3:相関図を選択した場合のサイドバー表示
+    elif operation_mode == mode_3:
+        st.caption('相関図を描こう')
+
+    # 以下は無効化(コメントアウト)した機能
+        # アップロード機能
+        # メンバー情報の読み込み
+        # data = st.file_uploader("Upload to CSV")
+
+        # ダウンロード機能
+        # text = "これはテスト用のテキストです"
+        # st.download_button(label="Download", data=text, file_name="test.txt", mime="text/plain")
 
 
-# アップロード機能
-# メンバー情報の読み込み
-# data = st.sidebar.file_uploader("Upload to CSV")
+    #探そう！をクリックした場合に処理が起動
+    #  09/23よこ追加
+    search_clicked = st.button("探そう！")
 
-# ダウンロード機能
-# text = "これはテスト用のテキストです"
-# st.sidebar.download_button(label="Download", data=text, file_name="test.txt", mime="text/plain")
-
-st.sidebar.button("探そう！")
-
-###↑↑↑ サイドバー ここまで ↑↑↑###
+#-------------------------------
+#  　　　サイドバー ここまで　　　　
+#-------------------------------
 
 
-
+#-------------------------------
+#  　　　トップ画面の表示　　
+#-------------------------------
 # トップ画像 or キャラクター
 st.image("http://marvel-force-chart.surge.sh/marvel_force_chart_img/top_ironman.png", caption="キャラクターなど表示")
 
-st.write("開発メモ: 現在は以下のメンバーに対応しています。\nまっちゃん,よこ,まっと,あらぴー,まる,けーすけ,りいちろー,りょーま,えーちゃん")
+#開発メモ
+st.badge("開発memo")
+st.write("現在は以下のメンバーに対応しています。\nまっちゃん,よこ,まっと,あらぴー,まる,けーすけ,りいちろー,りょーま,えーちゃん")
 
-# 25.09.23 まつ変更 空白の場合は結果を出さないように変更
-# データ分析を実行
+# データ分析を実行し、表示
 # ユーザー名を引数に渡して、共通点を探した結果をテキストで返す
-if not user_name == "":
-    out_text1 = analyze.find_major_commons(user_name, client)
-    out_text2 = analyze.find_similar_person(user_name, client)
-else:
-    out_text1 = ""
-    out_text2 = ""
+# # 09/23よこ編集 「探そう！」をクリックすることで処理が走るように改修
+if search_clicked:
+    try:
+        out_text1 = analyze.find_major_commons(user_name, client)
+        out_text2 = analyze.find_similar_person(user_name, client)
 
-# 画面上に結果を出力
-tab1, tab2, tab3 = st.tabs(["共通点","特徴","相関"])
-with tab1:
-    st.header("共通点タブ")
-    col1,col2=st.columns(2)
-    with col1:
-        st.write("みんなとの共通点")
-        st.write(out_text1)
-    with col2:
-        st.write("共通点のある人")
-        st.write(out_text2)
-tab2.write("いいい")
-tab3.write("ううう")
-
+        # 画面上に結果を出力
+        # tab1, tab2, tab3 = st.tabs(["共通点","特徴","相関"])
+        #mode_1:共通点探しを選択した場合の結果表示
+        if operation_mode == mode_1:
+            tab1, tab2 = st.tabs(["みんなとの共通点","共通点のある人"])
+            with tab1:
+                st.write("みんなとの共通点")
+                st.write(out_text1)
+            with tab2:
+                st.write("共通点のある人")
+                st.write(out_text2)
+        #mode_2:特徴探しを選択した場合の結果表示
+        elif operation_mode == mode_2:
+            tab1, tab2 = st.tabs(["みんなとの共通点","同じ特徴のある人"])
+            with tab1:
+                st.write("みんなとの共通点")
+                st.write(out_text1)
+            with tab2:
+                st.write("共通点のある人")
+                st.write(out_text2)
+            tab1.write("工事中")
+        elif operation_mode == mode_3:
+            tab1 = st.tabs(["相関図"])
+            tab1.write("工事中")
+    except Exception as e:
+        st.error(f"エラーが発生しました:{e}")
 

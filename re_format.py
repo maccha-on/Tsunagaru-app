@@ -1,5 +1,5 @@
 import pandas as pd
-import requests #JSON用
+import json
 from openai import OpenAI
 import os
 from pathlib import Path
@@ -15,13 +15,14 @@ from pathlib import Path
 
 df = pd.read_csv("out.csv")
 
-### 特徴を1つずつ列に横展開
-
-# ①カンマで分割してDataFrameに展開
+# ---------------CSVの特徴をカンマで分割--------------------------
+# カンマで分割してDataFrameに展開
 features_df = df["Features"].str.split(",", expand=True)
-# ②列名を「Feature_1」「Feature_2」…のようにする
+
+# 特徴を1つずつ列に横展開
+# 列名を「Feature_1」「Feature_2」…のようにする
 features_df.columns = [f"Feature_{i+1}" for i in range(features_df.shape[1])]
-# ③Name列と結合
+# Name列と結合
 df_wide = pd.concat([df["Name"], features_df], axis=1)
 
 # 出力
@@ -29,7 +30,15 @@ print(df_wide.head())
 df_wide.to_csv("out_sprited_wide.csv", index=False, encoding="utf-8-sig")
 print("特徴を分割したout_sprited_wide.csvを出力しました")
 
-# --- JSONファイルに出力 ---
+
+
+# ------------- JSONファイルに出力 ----------------
+df_json = df
+
+# --- カンマで分割してリストに変換 ---
+df_json["Features"] = df_json["Features"].apply(lambda x: [item.strip() for item in x.split(",")])
+
+# --- JSONに変換してファイルに出力 ---
 # orient="records" → 各行を辞書形式のリストにする
 # force_ascii=False → 日本語をそのまま出力
 df_wide.to_json("out.json", orient="records", force_ascii=False, indent=4)
@@ -37,7 +46,7 @@ print("DataFrameをout.jsonに出力しました")
 
 
 
-# ワンホット化（カンマ区切りを列に展開して0/1化）
+# -------------ワンホット化（カンマ区切りを列に展開して0/1化）---------------
 onehot = df["Features"].fillna("").str.get_dummies(sep=",")
 # 余分なスペースを除去（列名の前後空白を削る）
 onehot = onehot.rename(columns=lambda c: c.strip())

@@ -20,35 +20,42 @@ from pathlib import Path
 #   data: 探す元となる情報データ CSVを想定
 
 
-# 解説：選んだユーザー起点に、共通点を見つける関数
-# いちばん多くの人とつながりそうな共通点を出力する。
-def find_major_commons(name, client):
-    # データファイルの読み込み
-    # 現状は特徴を詰め込んだだけのout.csvを利用
+
+def read_json():
     try:
         # Cloud環境なら st.secrets["DATA"] が使える
-        data_txt = st.secrets["MEMBER_DATA"]
-        st.sidebar.caption('secretsから取得中...')
+        data_json = st.secrets["MEMBER_DATA_JSON"]
+        st.sidebar.caption('secretsからメンバーデータを取得中...')
     except Exception:
-        p = Path(__file__).parent / "out.csv"
+        p = Path(__file__).parent / "out.json"
         if p.exists():
-            data_txt = str(pd.read_csv("out.csv"))
-            st.sidebar.caption('ローカルcsvから取得中...')
+            data_json = pd.read_json("out.json")
+            st.sidebar.caption('ローカルcsvからメンバーデータを取得中...')
+    return data_json
+
+
+
+# 解説：選んだユーザー起点に、共通点を見つける関数
+# いちばん多くの人とつながりそうな共通点を出力する。
+def find_major_commons(name, client, data_json):
+    st.sidebar.caption("共通点が多い人を探索中....")
          
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
-        f"「{name}」が持つ特徴について、他の多くのメンバーとも共通するものを最大３つほど教えてください。"
-        f"各共通点については、誰と共通しているのかも説明してください。"
-        f"回答は、前置き無しで結論を記載。最大でも300字程度にしてください。\n"
-        f"メンバーとその特徴は、以下のとおりです。\n\n"
-        f"{data_txt}"
+        f"「{name}」が持つ特徴のうち、他のメンバーと会話が弾みそうな共通点を３つほど教えてください。\n"
+        f"各共通点について、誰と共通しているのかも説明してください。\n"
+        f"回答形式： 前置き無しで結論を記載。締めくくりの言葉は不要。\n"
+        f"文字数： 最大でも300字程度にしてください。\n"
+        f"メンバーとその特徴は、次のJSONを参照してください。\n"
+        f"{data_json}"
         )
     # 決めた内容を元にchatGPTへリクエスト
     response =  client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "user", "content": request_to_gpt},
-        ],
+            {"role": "system", "content": "あなたはJSONデータを解析するAIです。親しみやすく楽しい口調で、回答します。"},
+            {"role": "user", "content": request_to_gpt}
+        ]
     )
     # 返って来たレスポンスの内容
     output_content = response.choices[0].message.content.strip()
@@ -60,36 +67,26 @@ def find_major_commons(name, client):
 #      いちばん共通点が多そうな人をを出力する。
 #      *スクリプト意外はfind_commonsと同じ。
 #      直前のクライアントで、データファイルは読み込み済みが前提。
-def find_similar_person(name, client):
-    # データファイルの読み込み
-    try:
-        # Cloud環境なら st.secrets["DATA"] が使える
-        data_txt = st.secrets["MEMBER_DATA"]
-        st.sidebar.caption('secretsから取得中...')
-    except Exception:
-        p = Path(__file__).parent / "out.csv"
-        if p.exists():
-            data_txt = str(pd.read_csv("out.csv"))
-            st.sidebar.caption('ローカルcsvから取得中...')
-         
-        
+def find_similar_person(name, client, data_json):
+    st.sidebar.caption("共通点が多い人を探索中....")
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
-        f"「{name}」と、多くの共通点がある人を3人教えてください。"
-        f"回答形式については、共通点の多いメンバーの名前を書き、共通や類似するポイントを箇条書きで教えてください。"
-        f"回答は、最大でも300文字程度としてください。\n"
+        f"「{name}」と、共通点が多い人を3人教えてください。"
+        f"回答形式: 共通点の多いの名前を太字で書いたあと、共通や類似するポイントを書いてください。\n"
+        f"文字数: 最大でも300文字程度\n"
         f"#回答例のイメージ\n"
         f"1人目: たっちゃん\n"
-        f"理由: xxxxx \n\n"
-        f"#メンバーとその特徴リスト\n"
-        f"{data_txt}"
+        f"理由:  \n"
+        f"#メンバーとその特徴は、次のJSONを参照してください。\n"
+        f"{data_json}"
         )
     # 決めた内容を元にchatGPTへリクエスト
     response =  client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "user", "content": request_to_gpt},
-        ],
+            {"role": "system", "content": "あなたはJSONデータを解析するAIです。親しみやすいキャラクターです。"},
+            {"role": "user", "content": request_to_gpt}
+        ]
     )
     # 返って来たレスポンスの内容
     output_content = response.choices[0].message.content.strip()

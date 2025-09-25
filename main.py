@@ -62,6 +62,10 @@ mode_2 = "特徴。Comming Soon"
 mode_3 = "相関図。Comming Soon."
 operation_mode_of = {mode_1,mode_2,mode_3}
 
+# JSONデータを読み込み、メニューバーに反映
+data_json = analyze.read_json()
+names = data_json["Name"].dropna().unique().tolist()
+
 #-------------------------------
 #  　　　サイドバー ここから　　　　
 #-------------------------------
@@ -77,8 +81,8 @@ with st.sidebar:
     if operation_mode == mode_1:
         st.write("あなたの仲間について教えて")
         # ニックネームを入力してもらう
-        st.caption('あなたのニックネームは？')
-        user_name = st.text_input("ニックネームを入力")
+        st.caption('あなたの名前は？')
+        user_name = st.selectbox("選んでね", names)
         # st.sidebar.selectbox("選んでください。：",["AAA(固定値)","BBB","CCC"])
 
     #mode_2:特徴探しを選択した場合のサイドバー表示
@@ -116,19 +120,17 @@ with st.sidebar:
 #  　　　トップ画面の表示　　
 #-------------------------------
 # トップ画像 or キャラクター
-st.image("img/top_image.png", caption="(・▽・)人(・▽・)")
+st.image("img/top_image.png")
 
-#開発メモ
-st.badge("開発memo")
-st.write("現在は以下のメンバーに対応しています。\nまっちゃん,よこ,まっと,あらぴー,まる,けーすけ,りいちろー,りょーま,えーちゃん")
+
 
 # データ分析を実行し、表示
 # ユーザー名を引数に渡して、共通点を探した結果をテキストで返す
 # # 09/23よこ編集 「探そう！」をクリックすることで処理が走るように改修
 if search_clicked:
     try:
-        out_text1 = analyze.find_major_commons(user_name, client)
-        out_text2 = analyze.find_similar_person(user_name, client)
+        out_text1 = analyze.find_major_commons(user_name, client, data_json)
+        out_text2 = analyze.find_similar_person(user_name, client, data_json)
 
         # 画面上に結果を出力
         # tab1, tab2, tab3 = st.tabs(["共通点","特徴","相関"])

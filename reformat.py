@@ -13,7 +13,7 @@ from pathlib import Path
 # 
 # #####################################################################
 
-df = pd.read_csv("out.csv")
+df = pd.read_csv("out.csv", index_col=0)
 
 # ---------------CSVの特徴をカンマで分割--------------------------
 # カンマで分割してDataFrameに展開
@@ -41,7 +41,7 @@ df_json["Features"] = df_json["Features"].apply(lambda x: [item.strip() for item
 # --- JSONに変換してファイルに出力 ---
 # orient="records" → 各行を辞書形式のリストにする
 # force_ascii=False → 日本語をそのまま出力
-df_wide.to_json("out.json", orient="records", force_ascii=False, indent=4)
+df_json.to_json("out.json", orient="records", force_ascii=False, indent=4)
 print("DataFrameをout.jsonに出力しました")
 
 

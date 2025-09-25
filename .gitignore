@@ -3,3 +3,4 @@ out.csv
 *.csv
 __pycache__/
 .env
+*.json

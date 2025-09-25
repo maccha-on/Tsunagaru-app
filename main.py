@@ -116,7 +116,7 @@ with st.sidebar:
 #  　　　トップ画面の表示　　
 #-------------------------------
 # トップ画像 or キャラクター
-st.image("http://marvel-force-chart.surge.sh/marvel_force_chart_img/top_ironman.png", caption="キャラクターなど表示")
+st.image("img/top_image.png", caption="(・▽・)人(・▽・)")
 
 #開発メモ
 st.badge("開発memo")

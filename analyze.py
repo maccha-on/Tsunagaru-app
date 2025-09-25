@@ -25,12 +25,12 @@ def read_json():
     try:
         # Cloud環境なら st.secrets["DATA"] が使える
         data_json = st.secrets["MEMBER_DATA_JSON"]
-        st.sidebar.caption('secretsからメンバーデータを取得中...')
+        st.sidebar.caption('secrets')
     except Exception:
         p = Path(__file__).parent / "out.json"
         if p.exists():
             data_json = pd.read_json("out.json")
-            st.sidebar.caption('ローカルcsvからメンバーデータを取得中...')
+            st.sidebar.caption('Local csv')
     return data_json
 
 

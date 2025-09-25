@@ -6,7 +6,7 @@ from pathlib import Path
 
 # ######################## re_format.pyの説明 ##########################
 # 
-#  out.pyを成形したファイルをいくつか返します。
+#  out.csvを成形したファイルをいくつか返します。
 #   - out_sprited_wide.csv : 特徴データを横展開したもの
 #   - out.json : 上記をjson化したもの
 #   - onehot.csv : one-hot化したもの

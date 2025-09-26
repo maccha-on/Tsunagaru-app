@@ -25,15 +25,13 @@ features_df.columns = [f"Feature_{i+1}" for i in range(features_df.shape[1])]
 # Name列と結合
 df_wide = pd.concat([df["Name"], features_df], axis=1)
 
-# 出力
-print(df_wide.head())
-df_wide.to_csv("out_sprited_wide.csv", index=False, encoding="utf-8-sig")
+df_wide.to_csv("out_splited_wide.csv", index=False, encoding="utf-8-sig")
 print("特徴を分割したout_sprited_wide.csvを出力しました")
 
 
 
 # ------------- JSONファイルに出力 ----------------
-df_json = df
+df_json = df.copy()
 
 # --- カンマで分割してリストに変換 ---
 df_json["Features"] = df_json["Features"].apply(lambda x: [item.strip() for item in x.split(",")])

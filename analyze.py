@@ -66,7 +66,6 @@ def find_major_commons(name, client, data_json):
 # 解説：選んだユーザー起点に、共通点を見つける関数
 #      いちばん共通点が多そうな人をを出力する。
 #      *スクリプト意外はfind_commonsと同じ。
-#      直前のクライアントで、データファイルは読み込み済みが前提。
 def find_similar_person(name, client, data_json):
     st.sidebar.caption("共通点が多い人を探索中....")
     # ChatGPTを呼び出しスクリプト
@@ -91,3 +90,56 @@ def find_similar_person(name, client, data_json):
     # 返って来たレスポンスの内容
     output_content = response.choices[0].message.content.strip()
     return output_content 
+
+
+
+# 解説：チームメンバーを提案してもらう機能
+#      共通点探しモードのタブ3として追加
+def find_team_member(name, client, data_json):
+    st.sidebar.caption("共通点が多い人を探索中....")
+    # ChatGPTを呼び出しスクリプト
+    request_to_gpt = (
+        f"JSONデータを参照して、「{name}」とチームを組むと面白い開発が出来そうな人を教えてください。\n"
+        f"条件: 3人のチームを組むので、あとの2人を提案して、提案した理由を教えてください。\n"
+        f"条件: 毎回同じ回答にならないように、ランダム要素を入れてください。\n"
+        f"文字数: 最大でも300文字程度\n\n"
+        f"#メンバーとその特徴（JSON）\n"
+        f"{data_json}"
+        )
+    # 決めた内容を元にchatGPTへリクエスト
+    response =  client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "あなたはJSONデータを解析するAIです。親しみやすいキャラクターです。"},
+            {"role": "user", "content": request_to_gpt}
+        ]
+    )
+    # 返って来たレスポンスの内容
+    output_content = response.choices[0].message.content.strip()
+    return output_content
+
+
+
+# 解説：共通点を入力して、同じ共通点を持つ人を探す機能
+def search_by_common(common_point, client, data_json):
+    st.sidebar.caption("メンバーを探索中....")
+    # ChatGPTを呼び出しスクリプト
+    request_to_gpt = (
+        f"JSONデータを参照して、「{common_point}」と同じまたは類似するキーワードを持つ人を探してください。"
+        f"回答形式: (1)名前、(2)その人を選んだ理由説明 の順に、繰り返してください。\n"
+        f"文字数: 1人につき最大80文字程度\n\n"
+        f"#メンバーとその特徴はデータ（JSON）\n"
+        f"{data_json}"
+        )
+    # 決めた内容を元にchatGPTへリクエスト
+    response =  client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "あなたはJSONデータを解析するAIです。親しみやすいキャラクターです。"},
+            {"role": "user", "content": request_to_gpt}
+        ]
+    )
+    # 返って来たレスポンスの内容
+    output_content = response.choices[0].message.content.strip()
+    
+    return output_content

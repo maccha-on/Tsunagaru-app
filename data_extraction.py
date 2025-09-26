@@ -195,6 +195,7 @@ features_df.columns = [f"Feature_{i+1}" for i in range(features_df.shape[1])]
 df_wide = pd.concat([out_df["Name"], features_df], axis=1)
 
 # 出力
+print(df_wide.head())
 df_wide.to_csv("out_splited_wide.csv", index=False, encoding="utf-8-sig")
 print("キーワードを分割したout_sprited_wide.csvを出力しました")
 
@@ -217,7 +218,7 @@ onehot = out_df["Features"].fillna("").str.get_dummies(sep=",")
 # 余分なスペースを除去（列名の前後空白を削る）
 onehot = onehot.rename(columns=lambda c: c.strip())
 # Nameをインデックスにして結合（行＝人）
-result = pd.concat([df["Name"], onehot], axis=1).set_index("Name")
+result = pd.concat([out_df["Name"], onehot], axis=1).set_index("Name")
 # CSVに保存（Excelで文字化けしにくいUTF-8 BOM付き）
 result.to_csv("onehot.csv", encoding="utf-8-sig")
 

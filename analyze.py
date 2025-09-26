@@ -34,12 +34,14 @@ def read_json():
     return data_json
 
 
-
+# mode_1-1:共通点探し
 # 解説：選んだユーザー起点に、共通点を見つける関数
 # いちばん多くの人とつながりそうな共通点を出力する。
 def find_major_commons(name, client, data_json):
-    st.sidebar.caption("共通点が多い人を探索中....")
-         
+    #st.sidebar.caption("共通点が多い人を探索中....")
+    placeholder = st.empty()
+    placeholder.info("みんなとの共通点を探索中....")
+
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
         f"「{name}」が持つ特徴のうち、他のメンバーと会話が弾みそうな共通点を３つほど教えてください。\n"
@@ -57,17 +59,20 @@ def find_major_commons(name, client, data_json):
             {"role": "user", "content": request_to_gpt}
         ]
     )
+    placeholder.empty()
     # 返って来たレスポンスの内容
     output_content = response.choices[0].message.content.strip()
     return output_content 
 
 
-
+# mode_1-2:共通点探し
 # 解説：選んだユーザー起点に、共通点を見つける関数
 #      いちばん共通点が多そうな人をを出力する。
 #      *スクリプト意外はfind_commonsと同じ。
 def find_similar_person(name, client, data_json):
-    st.sidebar.caption("共通点が多い人を探索中....")
+    #st.sidebar.caption("共通点が多い人を探索中....")
+    placeholder = st.empty()
+    placeholder.info("共通点のある人を探索中....")
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
         f"「{name}」と、共通点が多い人を3人教えてください。"
@@ -87,16 +92,19 @@ def find_similar_person(name, client, data_json):
             {"role": "user", "content": request_to_gpt}
         ]
     )
+    placeholder.empty()
     # 返って来たレスポンスの内容
     output_content = response.choices[0].message.content.strip()
     return output_content 
 
 
-
+# mode_1-3:チーム提案
 # 解説：チームメンバーを提案してもらう機能
 #      共通点探しモードのタブ3として追加
 def find_team_member(name, client, data_json):
-    st.sidebar.caption("共通点が多い人を探索中....")
+    #st.sidebar.caption("共通点が多い人を探索中....")
+    placeholder = st.empty()
+    placeholder.info("最適なチーム員を探索中....")
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
         f"JSONデータを参照して、「{name}」とチームを組むと面白い開発が出来そうな人を教えてください。\n"
@@ -114,15 +122,18 @@ def find_team_member(name, client, data_json):
             {"role": "user", "content": request_to_gpt}
         ]
     )
+    placeholder.empty()
     # 返って来たレスポンスの内容
     output_content = response.choices[0].message.content.strip()
     return output_content
 
 
-
+# mode_2:特徴探し
 # 解説：共通点を入力して、同じ共通点を持つ人を探す機能
 def search_by_common(common_point, client, data_json):
-    st.sidebar.caption("メンバーを探索中....")
+    #st.sidebar.caption("メンバーを探索中....")
+    placeholder = st.empty()
+    placeholder.info("同じ共通点を持つ人を探索中....")
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
         f"JSONデータを参照して、「{common_point}」と同じまたは類似するキーワードを持つ人を探してください。"
@@ -139,6 +150,7 @@ def search_by_common(common_point, client, data_json):
             {"role": "user", "content": request_to_gpt}
         ]
     )
+    placeholder.empty()
     # 返って来たレスポンスの内容
     output_content = response.choices[0].message.content.strip()
     

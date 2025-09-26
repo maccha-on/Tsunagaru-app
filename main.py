@@ -58,7 +58,7 @@ client = get_openai_client()
 
 # 動作モードの選択　# 09/23よこ修正
 mode_1 = "共通点探し"
-mode_2 = "特徴。Comming Soon"
+mode_2 = "特徴探し"
 mode_3 = "相関図。Comming Soon."
 operation_mode_of = {mode_1,mode_2,mode_3}
 
@@ -82,7 +82,7 @@ with st.sidebar:
         st.write("あなたの仲間について教えて")
         # ニックネームを入力してもらう
         st.caption('あなたの名前は？')
-        user_name = st.selectbox("選んでね", names)
+        name = st.selectbox("選んでね", names)
         # st.sidebar.selectbox("選んでください。：",["AAA(固定値)","BBB","CCC"])
 
     #mode_2:特徴探しを選択した場合のサイドバー表示
@@ -90,7 +90,7 @@ with st.sidebar:
         st.write("探したい特徴を入力して")
         # 特徴を入力してもらう
         st.caption('調べたい特徴は？')
-        user_name = st.text_input("特徴を入力")
+        common_point = st.text_input("特徴を入力")
         #user_features = st.text_input("特徴を入力")
 
     #mode_3:相関図を選択した場合のサイドバー表示
@@ -129,30 +129,39 @@ st.image("img/top_image.png")
 # # 09/23よこ編集 「探そう！」をクリックすることで処理が走るように改修
 if search_clicked:
     try:
-        out_text1 = analyze.find_major_commons(user_name, client, data_json)
-        out_text2 = analyze.find_similar_person(user_name, client, data_json)
-
         # 画面上に結果を出力
         # tab1, tab2, tab3 = st.tabs(["共通点","特徴","相関"])
-        #mode_1:共通点探しを選択した場合の結果表示
+        #　mode_1:共通点探しを選択した場合の結果表示
         if operation_mode == mode_1:
-            tab1, tab2 = st.tabs(["みんなとの共通点","共通点のある人"])
+            #共通点を取得する関数を呼び出す
+            out_text1 = analyze.find_major_commons(name, client, data_json)
+            out_text2 = analyze.find_similar_person(name, client, data_json)
+            out_text3 = analyze.find_team_member(name, client, data_json)
+
+            #関数の取得結果を表示
+            tab1, tab2, tab3 = st.tabs(["みんなとの共通点","共通点のある人","チーム提案"])
             with tab1:
                 st.write("みんなとの共通点")
                 st.write(out_text1)
             with tab2:
                 st.write("共通点のある人")
                 st.write(out_text2)
+            with tab3:
+                st.write("チーム員の提案！")
+                st.write(out_text3)
         #mode_2:特徴探しを選択した場合の結果表示
         elif operation_mode == mode_2:
-            tab1, tab2 = st.tabs(["みんなとの共通点","同じ特徴のある人"])
+            #特徴を取得する関数を呼び出す
+            out_text3 = analyze.search_by_common(common_point, client, data_json)
+
+            #関数の取得結果を表示
+            tab1, tab2 = st.tabs(["同じ特徴のある人","共通点のある人"])
             with tab1:
-                st.write("みんなとの共通点")
-                st.write(out_text1)
+                st.write(out_text3)
             with tab2:
-                st.write("共通点のある人")
-                st.write(out_text2)
-            tab1.write("工事中")
+                st.write(out_text3)
+
+        #mode_3:相関図を選択した場合の結果表示
         elif operation_mode == mode_3:
             tab1 = st.tabs(["相関図"])
             tab1.write("工事中")

@@ -195,6 +195,7 @@ features_df.columns = [f"Feature_{i+1}" for i in range(features_df.shape[1])]
 df_wide = pd.concat([out_df["Name"], features_df], axis=1)
 
 # 出力
+print(df_wide.head())
 df_wide.to_csv("out_splited_wide.csv", index=False, encoding="utf-8-sig")
 print("キーワードを分割したout_sprited_wide.csvを出力しました")
 

@@ -1,5 +1,7 @@
 streamlit==1.49.0
 openai>=1.0.0   # OpenAIクラスがあるバージョンを指定
 python-dotenv
-pandas
-pathlib
+pandas>=2.0.0
+networkx>=3.1
+pyvis>=0.3.2
+pathlib; python_version<'3.12'

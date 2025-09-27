@@ -184,7 +184,7 @@ if search_clicked:
                 print('相関図を描画します。')
             if mode_3_flg == "cloud":
                 tab1 = st.tabs(["相関図"])
-                tab1.write("クラウドでは未実装のため、ローカル環境で実行お願いします <(_ _)>")
+                st.write("クラウドでは未実装のため、ローカル環境で実行お願いします <(_ _)>")
             else:
                 # ---- 相関図（network_app の処理を main から呼び出し） ----
                 # 必要JSONを読み込み（重複読み込みを整理：canonical_mapは load_canonical_map で統一）

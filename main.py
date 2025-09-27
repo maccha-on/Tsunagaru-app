@@ -14,15 +14,6 @@ import requests #JSON用
 from openai import OpenAI
 import os
 
-# --- network_app から相関図表示に必要な関数・定数を最小限取り込み --- 25/09/27まっと
-from network_app import (
-    OUT_NETWORK_JSON,  # JSON版で定義されているパス 例: out_network.json
-    CITY_TO_PREF_JSON, PREF_ALIASES_JSON, PREF_TO_REGION_JSON,
-    TOKEN_CATEGORY_JSON, CANONICAL_MAP_JSON, STOPWORDS_JSON,
-    load_json_any, load_token_category_json, load_kv_from_json, load_stopwords,
-    build_geo_dicts_from_json, build_graph, show_pyvis
-)
-
 # .env読み込みのため追加
 from dotenv import load_dotenv
 load_dotenv()
@@ -65,10 +56,10 @@ def get_openai_client():
 client = get_openai_client()
 
 
-# 動作モードの選択　# 09/23よこ修正。09/26まっと修正
+# 動作モードの選択　# 09/23よこ修正
 mode_1 = "共通点探し"
 mode_2 = "特徴探し"
-mode_3 = "相関図"
+mode_3 = "相関図。Comming Soon."
 operation_mode_of = {mode_1,mode_2,mode_3}
 
 # JSONデータを読み込み、メニューバーに反映
@@ -102,18 +93,9 @@ with st.sidebar:
         common_point = st.text_input("特徴を入力")
         #user_features = st.text_input("特徴を入力")
 
-    #mode_3:相関図を選択した場合のサイドバー表示　09/26まっと追記
+    #mode_3:相関図を選択した場合のサイドバー表示
     elif operation_mode == mode_3:
         st.caption('相関図を描こう')
-        st.header("表示パラメータ")
-        min_edge_score = st.slider("エッジ採用しきい値（合計スコア）", 0.0, 20.0, 2.0, 0.5)
-        graph_height   = st.number_input("グラフ高さ(px)", min_value=400, max_value=1600, value=800, step=50)
-        label_font_size = st.number_input("ラベル文字サイズ", min_value=8, max_value=30, value=16, step=1)
-        st.divider()
-        enable_link_sub1 = st.checkbox("subcategory1一致で“ゆるいつながり”を作る", value=True)
-        enable_link_sub2 = st.checkbox("subcategory2一致で“ゆるいつながり”を作る", value=True)
-        link_sub1_weight = st.slider("sub1リンクの重み", 0.0, 5.0, 0.6, 0.1)
-        link_sub2_weight = st.slider("sub2リンクの重み", 0.0, 5.0, 0.6, 0.1)
 
     # 以下は無効化(コメントアウト)した機能
         # アップロード機能
@@ -179,54 +161,10 @@ if search_clicked:
             with tab2:
                 st.write(out_text3)
 
-        #mode_3:相関図を選択した場合の結果表示　09/26まっと修正
+        #mode_3:相関図を選択した場合の結果表示
         elif operation_mode == mode_3:
-                        # ---- 相関図（network_app の処理を main から呼び出し） ----
-            # 必要JSONを読み込み
-            data_records = load_json_any(OUT_NETWORK_JSON)
-            token_category = load_token_category_json(TOKEN_CATEGORY_JSON)
-            CANONICAL_MAP  = load_kv_from_json(CANONICAL_MAP_JSON, "key", "value")
-            STOPWORDS      = load_stopwords(STOPWORDS_JSON)
-            CITY_TO_PREF, PREF_ALIASES, PREF_TO_REGION, REGION_SET = build_geo_dicts_from_json(
-                CITY_TO_PREF_JSON, PREF_ALIASES_JSON, PREF_TO_REGION_JSON
-            )
-
-            # 表示する人セレクタ
-            st.subheader("表示する人")
-            all_names = sorted(list(set(data_json["Name"].dropna().astype(str).str.strip().tolist())))
-            selected = st.multiselect("（未選択なら全員を表示）", options=all_names, default=[])
-            subset = selected if selected else None
-
-            # グラフ構築
-            G = build_graph(
-                data_records, min_edge_score, token_category, CANONICAL_MAP, STOPWORDS,
-                CITY_TO_PREF, PREF_ALIASES, PREF_TO_REGION, REGION_SET,
-                subset=subset,
-                enable_link_sub1=enable_link_sub1, enable_link_sub2=enable_link_sub2,
-                link_sub1_weight=link_sub1_weight, link_sub2_weight=link_sub2_weight,
-            )
-
-            # レイアウト：図＋エッジ一覧
-            col1, col2 = st.columns([3,2], gap="large")
-            with col1:
-                st.subheader("ネットワーク図")
-                show_pyvis(G, height_px=int(graph_height), label_font_size=int(label_font_size))
-            with col2:
-                st.subheader("エッジ一覧（重い順）")
-                if G.number_of_edges() == 0:
-                    st.info("エッジがありません。しきい値や辞書を調整してください。")
-                else:
-                    rows = []
-                    for u, v, d in G.edges(data=True):
-                        rows.append({"A": u, "B": v, "score": d.get("weight",0),
-                                     "common_count": d.get("common_count",0),
-                                     "common_features": d.get("common_features","")})
-                    edge_df = pd.DataFrame(rows).sort_values(["score","common_count"], ascending=False)
-                    st.dataframe(edge_df, use_container_width=True)
-                    import io
-                    csv_buf = io.StringIO()
-                    edge_df.to_csv(csv_buf, index=False)
-                    st.download_button("エッジCSVをダウンロード", data=csv_buf.getvalue(), file_name="edges.csv", mime="text/csv")
+            tab1 = st.tabs(["相関図"])
+            tab1.write("工事中")
     except Exception as e:
         st.error(f"エラーが発生しました:{e}")
 

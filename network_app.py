@@ -25,6 +25,9 @@ STOPWORDS_JSON      = "stopwords.json"               # ["旅行","学び",...]
 SUBCAT_WEIGHTS_JSON = "subcategory_weights.json"     # [{"category":"hobby","subcategory1":"sports","subcategory2":"running","weight":1.4}, ...]
                                                      # or { "(cat,sub1,sub2)": weight } not recommended
 
+# ===================== 基本ウェイト ===================== 09/27まっと追加
+CATEGORY_WEIGHTS = {"geo":2, "role":2, "industry":2, "hobby":1, "education":1, "age":1, "other":1}
+GEO_LEVEL_WEIGHTS= {"city":3, "pref":2, "region":1}
 
 
 # --------------------------------------------------------
@@ -37,10 +40,9 @@ SUBCAT_WEIGHTS_JSON = "subcategory_weights.json"     # [{"category":"hobby","sub
 #  - load_subcat_weights_json: (cat,sub1,sub2) → weight（ワイルドカード対応）
 # --------------------------------------------------------
 
-# ========== Normalizer ==========
+# ========== Normalizer（正規化ユーティリティ）========== 09/27まっと修正
 def normalize_key(s: str) -> str:
     if s is None: return ""
-    import unicodedata, re
     t = unicodedata.normalize("NFKC", str(s)).strip().lower()
     return re.sub(r"\s+", "", t)
 
@@ -49,89 +51,126 @@ def load_json_any(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def load_kv_from_json(path, key_field, val_field):
-    obj = load_json_any(path)
-    if isinstance(obj, dict):
-        # assume already mapping
-        return {normalize_key(k): str(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        out = {}
-        for r in obj:
-            if not isinstance(r, dict): 
-                continue
-            k = normalize_key(r.get(key_field, ""))
-            v = str(r.get(val_field, ""))
-            if k:
-                out[k] = v
-        return out
-    else:
-        return {}
-
-def load_list_from_json(path):
-    obj = load_json_any(path)
-    if isinstance(obj, list):
-        return [normalize_key(x) for x in obj if str(x).strip()]
-    elif isinstance(obj, dict):
-        return [normalize_key(k) for k in obj.keys()]
-    return []
-
-def load_token_category_json(path):
-    obj = load_json_any(path)
+def _pair_list_to_dict(obj):
+    """[['a','b'], ['c','d']] → {'a':'b','c':'d'}（守備範囲を広げる）"""
     out = {}
-    if isinstance(obj, list):
-        for r in obj:
-            if not isinstance(r, dict): 
-                continue
-            tok = normalize_key(r.get("token",""))
-            if not tok: continue
-            cat  = str(r.get("category","other")) or "other"
-            sub1 = str(r.get("subcategory1", r.get("subcategory","other")) or "other")
-            sub2 = str(r.get("subcategory2","other") or "other")
-            out[tok] = (cat, sub1, sub2)
-    elif isinstance(obj, dict):
-        # mapping token -> {category, subcategory1, subcategory2}
-        for k,v in obj.items():
-            tok = normalize_key(k)
-            if not tok: continue
-            if isinstance(v, dict):
-                cat  = str(v.get("category","other")) or "other"
-                sub1 = str(v.get("subcategory1", v.get("subcategory","other")) or "other")
-                sub2 = str(v.get("subcategory2","other") or "other")
-            else:
-                cat, sub1, sub2 = str(v), "other", "other"
-            out[tok] = (cat, sub1, sub2)
+    for it in obj:
+        if isinstance(it, (list, tuple)) and len(it) >= 2:
+            k = normalize_key(it[0]); v = str(it[1])
+            if k: out[k] = v
     return out
 
-def load_subcat_weights_json(path):
-    try:
-        obj = load_json_any(path)
-    except Exception:
-        return {}
+def load_kv_from_json(path: str, key_field: str, val_field: str):
+    """key/value の JSON を辞書化（辞書・配列どちらにも対応）"""
+    obj = load_json_any(path)
+    if isinstance(obj, dict):
+        return {normalize_key(k): str(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        out = {}
+        for r in obj:
+            if isinstance(r, dict):
+                k = normalize_key(r.get(key_field, ""))
+                v = str(r.get(val_field, ""))
+                if k: out[k] = v
+        if out: return out
+        return _pair_list_to_dict(obj)
+    return {}
+
+def load_stopwords(path: str):
+    obj = load_json_any(path)
+    if isinstance(obj, list):
+        acc = set()
+        for x in obj:
+            if isinstance(x, (list, tuple)) and len(x) >= 1:
+                acc.add(normalize_key(x[0]))
+            else:
+                acc.add(normalize_key(x))
+        return {w for w in acc if w}
+    if isinstance(obj, dict):
+        return {normalize_key(k) for k in obj.keys() if str(k).strip()}
+    return set()
+
+def load_token_category_json(path: str):
+    """
+    token_category.json → token -> (category, sub1, sub2)
+    入力は {token:{...}} 形式 or レコード配列のどちらでも可
+    """
+    obj = load_json_any(path)
     out = {}
+    if isinstance(obj, dict):
+        for tok, v in obj.items():
+            tok_n = normalize_key(tok)
+            if not tok_n: continue
+            if isinstance(v, dict):
+                cat  = str(v.get("category", "other") or "other")
+                sub1 = str(v.get("subcategory1", v.get("subcategory", "other")) or "other")
+                sub2 = str(v.get("subcategory2", "other") or "other")
+            elif isinstance(v, (list, tuple)):
+                cat  = str(v[0]) if len(v)>0 else "other"
+                sub1 = str(v[1]) if len(v)>1 else "other"
+                sub2 = str(v[2]) if len(v)>2 else "other"
+            else:
+                cat, sub1, sub2 = str(v), "other", "other"
+            out[tok_n] = (cat, sub1, sub2)
+        return out
     if isinstance(obj, list):
         for r in obj:
-            if not isinstance(r, dict): continue
-            cat  = str(r.get("category","other") or "other")
-            sub1 = str(r.get("subcategory1","*") or "*")
-            sub2 = str(r.get("subcategory2","*") or "*")
+            if isinstance(r, dict):
+                tok = normalize_key(r.get("token",""))
+                if not tok: continue
+                cat  = str(r.get("category","other") or "other")
+                sub1 = str(r.get("subcategory1", r.get("subcategory","other")) or "other")
+                sub2 = str(r.get("subcategory2","other") or "other")
+                out[tok] = (cat, sub1, sub2)
+            elif isinstance(r, (list, tuple)):
+                tok = normalize_key(r[0]) if len(r)>0 else ""
+                if not tok: continue
+                cat  = str(r[1]) if len(r)>1 else "other"
+                sub1 = str(r[2]) if len(r)>2 else "other"
+                sub2 = str(r[3]) if len(r)>3 else "other"
+                out[tok] = (cat, sub1, sub2)
+        return out
+    return out
+
+def load_subcat_weights_json(path: str):
+    if not os.path.exists(path): return {}
+    obj = load_json_any(path)
+    out = {}
+    if isinstance(obj, dict):
+        # {"(cat,sub1,sub2)": weight} / {"cat,sub1,sub2": weight}
+        for k, v in obj.items():
             try:
-                w = float(r.get("weight", 1.0))
-            except Exception:
-                w = 1.0
-            out[(cat, sub1, sub2)] = w
-    elif isinstance(obj, dict):
-        # optional: { "(cat,sub1,sub2)": weight }
-        for k,v in obj.items():
-            try:
-                t = k.strip("() ").split(",")
-                cat = t[0].strip()
-                sub1 = t[1].strip()
-                sub2 = t[2].strip()
+                kk = k.strip().strip("()")
+                t = [x.strip() for x in kk.split(",")]
+                cat  = t[0] if len(t)>0 else "*"
+                sub1 = t[1] if len(t)>1 else "*"
+                sub2 = t[2] if len(t)>2 else "*"
                 out[(cat, sub1, sub2)] = float(v)
             except Exception:
                 continue
-    return out
-
+        return out
+    if isinstance(obj, list):
+        for r in obj:
+            if isinstance(r, dict):
+                cat  = str(r.get("category", "other") or "other")
+                sub1 = str(r.get("subcategory1", "*") or "*")
+                sub2 = str(r.get("subcategory2", "*") or "*")
+                try:
+                    w = float(r.get("weight", 1.0))
+                except Exception:
+                    w = 1.0
+                out[(cat, sub1, sub2)] = w
+            elif isinstance(r, (list, tuple)):
+                cat  = str(r[0]) if len(r)>0 else "other"
+                sub1 = str(r[1]) if len(r)>1 else "*"
+                sub2 = str(r[2]) if len(r)>2 else "*"
+                try:
+                    w = float(r[3]) if len(r)>3 else 1.0
+                except Exception:
+                    w = 1.0
+                out[(cat, sub1, sub2)] = w
+        return out
+    return {}
 
 
 # --------------------------------------------------------
@@ -143,55 +182,37 @@ def load_subcat_weights_json(path):
 #  - CATEGORY_WEIGHTS/GEO_LEVEL_WEIGHTS: 基本カテゴリと地理階層の重み
 # --------------------------------------------------------
 
-# ========== Geo dicts & canonical map / stopwords ==========
-def build_geo_dicts_from_json(city_to_pref_path, pref_aliases_path, pref_to_region_path):
+# ========== 地理辞書（JSON）==========
+def build_geo_dicts_from_json(city_to_pref_path: str, pref_aliases_path: str, pref_to_region_path: str):
     CITY_TO_PREF = load_kv_from_json(city_to_pref_path, "city", "pref")
     PREF_ALIASES = load_kv_from_json(pref_aliases_path, "alias", "pref")
     PREF_TO_REGION = load_kv_from_json(pref_to_region_path, "pref", "region")
     REGION_SET = {normalize_key(v) for v in PREF_TO_REGION.values()}
     return CITY_TO_PREF, PREF_ALIASES, PREF_TO_REGION, REGION_SET
 
-def load_canonical_map(path):
+# ===================== 同義語マップ（JSON） =====================
+def load_canonical_map(path: str):
     obj = load_json_any(path)
     if isinstance(obj, dict):
         return {normalize_key(k): str(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        # list of {"key","value"}
+    if isinstance(obj, list):
         out = {}
         for r in obj:
-            if not isinstance(r, dict): continue
-            k = normalize_key(r.get("key",""))
-            v = str(r.get("value",""))
-            if k: out[k] = v
+            if isinstance(r, dict):
+                k = normalize_key(r.get("key","")); v = str(r.get("value",""))
+                if k: out[k] = v
+            elif isinstance(r, (list, tuple)) and len(r) >= 2:
+                k = normalize_key(r[0]); v = str(r[1])
+                if k: out[k] = v
         return out
     return {}
 
-def load_stopwords(path):
-    obj = load_json_any(path)
-    if isinstance(obj, list):
-        return {normalize_key(x) for x in obj if str(x).strip()}
-    elif isinstance(obj, dict):
-        return {normalize_key(k) for k in obj.keys()}
-    return set()
-
-# ========== Categorization & weights ==========
-CATEGORY_WEIGHTS = {"geo":2,"role":2,"industry":2,"hobby":1,"education":1,"age":1,"other":1}
-GEO_LEVEL_WEIGHTS = {"city":3,"pref":2,"region":1}
-
-def lookup_hier_weight(cat: str, sub1: str, sub2: str, weights: dict) -> float:
-    cands = [(cat, sub1, sub2),(cat, sub1, "*"),(cat, "*", sub2),(cat, "*", "*")]
-    for k in cands:
-        if k in weights: return weights[k]
-    return 1.0
-
+# ===================== トークン正規化 & 地理展開 =====================
 def canonicalize_token(tok_norm: str, CANONICAL_MAP: dict) -> str:
     return CANONICAL_MAP.get(tok_norm, tok_norm)
 
 def is_prefecture(tok_norm: str, PREF_ALIASES: dict) -> bool:
     return tok_norm.endswith(("県","都","府","道")) or tok_norm in PREF_ALIASES
-
-def normalize_pref_name(tok_norm: str, PREF_ALIASES: dict) -> str:
-    return PREF_ALIASES.get(tok_norm, tok_norm)
 
 def geo_canonicalize(tok_norm: str, CITY_TO_PREF: dict, PREF_ALIASES: dict, PREF_TO_REGION: dict, REGION_SET: set):
     city = pref = region = None
@@ -205,7 +226,7 @@ def geo_canonicalize(tok_norm: str, CITY_TO_PREF: dict, PREF_ALIASES: dict, PREF
         region_disp = PREF_TO_REGION.get(normalize_key(pref_disp), "")
         return (None, pref_disp, region_disp)
     if tok_norm in REGION_SET:
-        # find original case region label
+        # 地方名（region）が直接入っていたケース
         for v in set(PREF_TO_REGION.values()):
             if normalize_key(v)==tok_norm:
                 return (None, None, v)
@@ -236,16 +257,14 @@ def parse_features(raw, CANONICAL_MAP, STOPWORDS,
                    token_category,
                    enable_link_sub1: bool, enable_link_sub2: bool) -> set[str]:
     if raw is None: return set()
-    toks = set()
     # raw can be list or string
     items = raw if isinstance(raw, list) else [x for x in str(raw).split(",")]
+    toks = set()
     for x in items:
-        if not str(x).strip():
-            continue
+        if not str(x).strip(): continue
         norm = normalize_key(x)
         canon = canonicalize_token(norm, CANONICAL_MAP)
-        if not canon or normalize_key(canon) in STOPWORDS:
-            continue
+        if not canon or normalize_key(canon) in STOPWORDS: continue
         c, p, r = geo_canonicalize(normalize_key(canon), CITY_TO_PREF, PREF_ALIASES, PREF_TO_REGION, REGION_SET)
         if c or p or r:
             toks |= geo_expand_tokens(normalize_key(canon), CITY_TO_PREF, PREF_ALIASES, PREF_TO_REGION, REGION_SET)
@@ -270,14 +289,21 @@ def parse_features(raw, CANONICAL_MAP, STOPWORDS,
 #      mul  = (cat,sub1,sub2) に対する重み（ワイルドカード含む最適一致）
 # --------------------------------------------------------
 
+def lookup_hier_weight(cat: str, sub1: str, sub2: str, weights: dict) -> float:
+    for k in [(cat, sub1, sub2), (cat, sub1, "*"), (cat, "*", sub2), (cat, "*", "*")]:
+        if k in weights: return weights[k]
+    return 1.0
+
 def token_weight(tok: str,
                  token_category: dict,
                  subcat_weights: dict,
                  link_sub1_weight: float,
                  link_sub2_weight: float) -> float:
     if tok.startswith("geo:"):
-        try: _, level, _ = tok.split(":", 2)
-        except ValueError: return CATEGORY_WEIGHTS.get("geo",1)
+        try:
+            _, level, _ = tok.split(":", 2)
+        except ValueError:
+            return CATEGORY_WEIGHTS.get("geo",1)
         return CATEGORY_WEIGHTS.get("geo",1) * GEO_LEVEL_WEIGHTS.get(level,1)
     if tok.startswith("link:sub1:"): return float(link_sub1_weight)
     if tok.startswith("link:sub2:"): return float(link_sub2_weight)
@@ -300,21 +326,26 @@ def pair_score_and_common(f1: set, f2: set, token_category: dict, subcat_weights
     score = sum(token_weight(t, token_category, subcat_weights, link_sub1_weight, link_sub2_weight) for t in common)
     return score, common
 
-def build_graph(data_records, min_edge_score, token_category, subcat_weights, CANONICAL_MAP, STOPWORDS,
-                CITY_TO_PREF, PREF_ALIASES, PREF_TO_REGION, REGION_SET,
+# ===================== グラフ構築（JSON レコード） =====================
+def build_graph(data_records: list, min_edge_score: float,
+                token_category: dict, subcat_weights: dict, CANONICAL_MAP: dict, STOPWORDS: set,
+                CITY_TO_PREF: dict, PREF_ALIASES: dict, PREF_TO_REGION: dict, REGION_SET: set,
                 subset=None,
                 enable_link_sub1=True, enable_link_sub2=True,
-                link_sub1_weight=0.6, link_sub2_weight=0.6):
+                link_sub1_weight=0.6, link_sub2_weight=0.6,):
+    """data_records は JSON の配列（list[dict]）を想定"""
+    if subcat_weights is None: subcat_weights = {}
     people = []
     for r in data_records:
         name = str(r.get("Name","")).strip()
-        if subset and name not in subset: 
-            continue
-        feats = parse_features(r.get("Features"), CANONICAL_MAP, STOPWORDS,
-                               CITY_TO_PREF, PREF_ALIASES, PREF_TO_REGION, REGION_SET,
-                               token_category,
-                               enable_link_sub1, enable_link_sub2)
-        if name: people.append((name, feats))
+        if not name: continue
+        if subset and name not in subset: continue
+        feats = parse_features(
+            r.get("Features"), CANONICAL_MAP, STOPWORDS,
+            CITY_TO_PREF, PREF_ALIASES, PREF_TO_REGION, REGION_SET,
+            token_category,enable_link_sub1, enable_link_sub2
+        )
+        people.append((name, feats))
 
     G = nx.Graph()
     for name, feats in people:
@@ -330,7 +361,9 @@ def build_graph(data_records, min_edge_score, token_category, subcat_weights, CA
                 if t.startswith("link:sub1:"): return f"sub1:{t.split(':',2)[2]}"
                 if t.startswith("link:sub2:"): return f"sub2:{t.split(':',2)[2]}"
                 return t
-            G.add_edge(n1, n2, weight=score, common_features="、".join(pretty(t) for t in common),
+            G.add_edge(n1, n2,
+                       weight=score,
+                       common_features="、".join(pretty(t) for t in common),
                        common_count=len(common))
     return G
 
@@ -405,15 +438,16 @@ def render_network_app():
     link_sub2_weight = st.sidebar.slider("sub2リンクの重み", 0.0, 5.0, 0.6, 0.1)
 
     # ---- Subset selector ----
-    all_names = [str(r.get("Name","")).strip() for r in data_records if str(r.get("Name","")).strip()]
+    all_names = sorted(set(str(r.get("Name","")).strip() for r in data_records if str(r.get("Name","")).strip()))
     with st.expander("表示する人を選択（未選択なら全員）", expanded=False):
         selected = st.multiselect("表示する人", options=all_names, default=[])
-        subset = selected if selected else None
+    subset = selected if selected else None
 
     # ---- Build graph ----
     G = build_graph(data_records, min_edge_score, TOKEN_CATEGORY, SUBCAT_WEIGHTS, CANONICAL_MAP, STOPWORDS,
                     CITY_TO_PREF, PREF_ALIASES, PREF_TO_REGION, REGION_SET,
                     subset=subset,
+                    # 以下は UI を用意している場合のみ
                     enable_link_sub1=enable_link_sub1, enable_link_sub2=enable_link_sub2,
                     link_sub1_weight=link_sub1_weight, link_sub2_weight=link_sub2_weight)
 

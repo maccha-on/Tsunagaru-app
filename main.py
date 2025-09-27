@@ -178,6 +178,7 @@ if search_clicked:
 
         #mode_3:相関図を選択した場合の結果表示
         elif operation_mode == mode_3:
+            mode_3_flg = "Local"
             try:
                mode_3_flg = st.secrets[DEPLOY_ENV] 
             except Exception:

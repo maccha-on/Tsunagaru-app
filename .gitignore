@@ -1,6 +1,5 @@
-DB.csv
-out.csv
 *.csv
 __pycache__/
 .env
 *.json
+!*sample*

@@ -66,45 +66,132 @@ client = get_openai_client()
 
 
 # 動作モードの選択　# 09/23よこ修正
-mode_1 = "共通点探し"
+mode_1 = "仲間探し"
 mode_2 = "特徴探し"
-mode_3 = "相関図(Local実行専用)"
+mode_3 = "繋がり線(Local実行専用)"
 operation_mode_of = {mode_1,mode_2,mode_3}
 
 # JSONデータを読み込み、メニューバーに反映
 data_json = analyze.read_json()
 names = data_json["Name"].dropna().unique().tolist()
 
+#---------------------------------------------------
+#  　　　CSSの読み込み（初期表示）　9/27追加　　　
+#---------------------------------------------------
+st.markdown(
+    """
+    <style>
+    /* サイドバー全体 */
+    [data-testid="stSidebar"] {
+        background: #F8D7B3; /* 単一色 */
+        color: #444;
+        font-family: "Rounded Mplus 1c", "Hiragino Maru Gothic ProN", sans-serif; /* 丸めのフォント */
+        padding: 20px 15px;
+        border-right: 2px solid #e0e6ef;
+        box-shadow: 4px 0 8px rgba(0,0,0,0.05);
+    }
+    /* カード風の囲み */
+    [data-testid="stSidebar"] .sidebar-content {
+        background: FFF8F0;
+        border-radius: 16px;  /* 丸みを強める */
+        padding: 18px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    /* 見出し */
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: #E2873B;
+        font-weight: 600;
+        border-bottom: 2px solid #8f6539;
+        padding-bottom: 6px;
+    }
+    /* 選択ボックスや入力 */
+    [data-testid="stSidebar"] .stSelectbox,
+    [data-testid="stSidebar"] .stTextInput,
+    [data-testid="stSidebar"] .stSlider {
+        background: #FFF8F0;
+        border-radius: 12px;
+        padding: 6px 10px;
+        margin: 10px 0;
+        border: 1px solid #e6eaf2;
+    }
+    /* プルダウンの選択肢部分 */
+    [data-testid="stSelectbox"] > div {
+        background-color: #FFF8F0;
+        color: #4A4A4A;
+        font-weight: bold;
+    }
+    /* プルダウンの内部テキスト*/
+    [data-testid="stSelectbox"] label {
+        color: #E2873B;
+        font-weight: bold;
+    }
+    /* ボタン */
+    [data-testid="stSidebar"] button {
+        background:#E2873B;
+        color: #FDF6EC;
+        border: none;
+        border-radius: 20px;
+        padding: 10px 18px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    /* ボタンにカーソルを当てた際 */
+    [data-testid="stSidebar"] button:hover {
+        background-color: #B8CEC4;
+        color: #336C62;
+        font-weight: bold;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    /* Streamlitの中央コンテンツ領域 */
+    [data-testid="stAppViewContainer"] {
+        background-color: #FFF8F0;
+        color: #8F6539;
+    }
+    /* Streamlitのツールバー領域 */
+    [data-testid="stHeader"] {
+        background-color: #FFF8F0;
+        color: #8F6539
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 #-------------------------------
 #  　　　サイドバー ここから　　　　
 #-------------------------------
 with st.sidebar:
     st.title("つながるアプリ")
-    st.caption("アプリの説明")
+    st.caption("仲間や繋がりを探そう！")
     # st.sidebar.write("どんな繋がりを見つける？")
     # st.sidebar.pills("選んでください。：",["共通点探し","特徴探し","その他"])
-    operation_mode = st.selectbox("どんな繋がりを見つける？", options=operation_mode_of)
+    operation_mode = st.selectbox("どんな繋がりを見つける？", options=operation_mode_of,index=0)
     #coice = st.sidebar.radio("選んでください。：",["共通点探し","特徴探し","その他"])
 
     #mode_1:共通点探しを選択した場合のサイドバー表示
     if operation_mode == mode_1:
-        st.write("あなたの仲間について教えて")
+        # st.write("あなたの仲間について教えて")
         # ニックネームを入力してもらう
-        st.caption('あなたの名前は？')
+        st.caption('あなたが調べるのは誰？')
         name = st.selectbox("選んでね", names)
         # st.sidebar.selectbox("選んでください。：",["AAA(固定値)","BBB","CCC"])
 
     #mode_2:特徴探しを選択した場合のサイドバー表示
     elif operation_mode == mode_2:
-        st.write("探したい特徴を入力して")
+        # st.write("探したい特徴を入力して")
         # 特徴を入力してもらう
-        st.caption('調べたい特徴は？')
-        common_point = st.text_input("特徴を入力")
+        st.caption('どんな特徴を調べる？')
+        common_point = st.text_input("特徴や趣味を入力")
         #user_features = st.text_input("特徴を入力")
 
     #mode_3:相関図を選択した場合のサイドバー表示
     elif operation_mode == mode_3:
-        st.caption('相関図を描こう')
+        st.caption('繋がりを線で描こう')
         st.header("表示パラメータ")
         min_edge_score = st.slider("エッジ採用しきい値（合計スコア）", 0.0, 20.0, 2.0, 0.5)
         graph_height   = st.number_input("グラフ高さ(px)", min_value=400, max_value=1600, value=800, step=50)
@@ -138,7 +225,22 @@ with st.sidebar:
 #  　　　トップ画面の表示　　
 #-------------------------------
 # トップ画像 or キャラクター
-st.image("img/top_image.png")
+# st.image("img/top_image.png")
+# 09/28 クリック時に画像が切り替わるように修正
+
+# 初期化
+if "search_triggered" not in st.session_state:
+    st.session_state.search_triggered = False
+
+# 検索ボタン
+if search_clicked:
+    st.session_state.search_triggered = True
+
+# 表示制御
+if st.session_state.search_triggered == False:
+    st.image("img/top_image.png")
+else:
+    st.image("img/top_image_2.png", width=300)
 
 
 
@@ -157,27 +259,92 @@ if search_clicked:
             out_text3 = analyze.find_team_member(name, client, data_json)
 
             #関数の取得結果を表示
+            # 09/28 出力するタブにcssを適用
+            st.markdown(
+                """
+                <style>
+                /* タブ全体の背景 */
+                div[data-baseweb="tab-list"] {
+                    background-color: #FDF6EC;
+                    padding: 10px;
+                    border-radius: 10px;
+                }
+                /* タブ1つ1つ */
+                button[data-baseweb="tab"] {
+                    font-size: 18px;
+                    color: #FDF6EC;
+                    background-color: #F8D7B3;
+                    border-radius: 8px;
+                    margin-right: 5px;
+                    padding: 10px 20px;
+                }
+                /* アクティブなタブ */
+                button[data-baseweb="tab"][aria-selected="true"] {
+                    background-color: #E2873B;
+                    color: #F8D7B3;
+                    font-weight: bold;
+                }
+                /* 非アクティブなタブのホバー時 */
+                button[data-baseweb="tab"]:not([aria-selected="true"]):hover {
+                    background-color: #B8CEC4;
+                    color: #336C62;
+                    font-weight: bold;
+                    transform: translateY(-2px);
+                }
+
+                </style>
+                """,
+                unsafe_allow_html=True
+            )
+
+            # 関数の取得結果を表示
+            # 09/28 出力エリアをカード形式に変更
             tab1, tab2, tab3 = st.tabs(["みんなとの共通点","似ている人","チーム提案"])
             with tab1:
-                st.write(out_text1)
+                card_html = f"""
+                <div style="background-color:#F8D7B3; color:#E2873B; border:1px solid #ccc; padding:20px; border-radius:10px; box-shadow:2px 2px 10px rgba(0,0,0,0.1);">
+                <h3>共通点を見つけたよ！！</h3>
+                <p>{out_text1}</p>
+                </div>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
             with tab2:
-                st.write(out_text2)
+                #st.write(out_text2)
+                card_html = f"""
+                <div style="background-color:#F8D7B3; color:#E2873B; border:1px solid #ccc; padding:20px; border-radius:10px; box-shadow:2px 2px 10px rgba(0,0,0,0.1);">
+                <h3>似ている人を見つけたよ！！</h3>
+                <p>{out_text2}</p>
+                </div>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
             with tab3:
-                st.write(out_text3)
+                #st.write(out_text3)
+                card_html = f"""
+                <div style="background-color:#F8D7B3; color:#E2873B; border:1px solid #ccc; padding:20px; border-radius:10px; box-shadow:2px 2px 10px rgba(0,0,0,0.1);">
+                <h3>この人と組んでみる？？</h3>
+                <p>{out_text3}</p>
+                </div>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
         #mode_2:特徴探しを選択した場合の結果表示
         elif operation_mode == mode_2:
             #特徴を取得する関数を呼び出す
             out_text3 = analyze.search_by_common(common_point, client, data_json)
 
             #関数の取得結果を表示
-            tab1, tab2 = st.tabs(["同じ特徴のある人","似ている人"])
-            with tab1:
-                st.write(out_text3)
-            with tab2:
-                st.write(out_text3)
-
+            # 09/28 出力エリアをカード形式に変更
+            #st.write(out_text3)
+            card_html = f"""
+            <div style="background-color:#F8D7B3; color:#E2873B; border:1px solid #ccc; padding:20px; border-radius:10px; box-shadow:2px 2px 10px rgba(0,0,0,0.1);">
+            <h3>同じ特徴の仲間を見つけたよ</h3>
+            <p>{out_text3}</p>
+            </div>
+            """
+            st.markdown(card_html, unsafe_allow_html=True)
+            
         #mode_3:相関図を選択した場合の結果表示
         elif operation_mode == mode_3:
+            mode_3_flg = "Local"
             try:
                mode_3_flg = st.secrets[DEPLOY_ENV] 
             except Exception:

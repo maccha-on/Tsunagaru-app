@@ -59,7 +59,7 @@ client = get_openai_client()
 # 動作モードの選択　# 09/23よこ修正
 mode_1 = "共通点探し"
 mode_2 = "特徴探し"
-mode_3 = "相関図。Comming Soon."
+mode_3 = "相関図(ローカル環境のみ動作)"
 operation_mode_of = {mode_1,mode_2,mode_3}
 
 # JSONデータを読み込み、メニューバーに反映
@@ -139,15 +139,12 @@ if search_clicked:
             out_text3 = analyze.find_team_member(name, client, data_json)
 
             #関数の取得結果を表示
-            tab1, tab2, tab3 = st.tabs(["みんなとの共通点","共通点のある人","チーム提案"])
+            tab1, tab2, tab3 = st.tabs(["みんなとの共通点","似ている人","チーム提案"])
             with tab1:
-                st.write("みんなとの共通点")
                 st.write(out_text1)
             with tab2:
-                st.write("共通点のある人")
                 st.write(out_text2)
             with tab3:
-                st.write("チーム員の提案！")
                 st.write(out_text3)
         #mode_2:特徴探しを選択した場合の結果表示
         elif operation_mode == mode_2:
@@ -155,7 +152,7 @@ if search_clicked:
             out_text3 = analyze.search_by_common(common_point, client, data_json)
 
             #関数の取得結果を表示
-            tab1, tab2 = st.tabs(["同じ特徴のある人","共通点のある人"])
+            tab1, tab2 = st.tabs(["同じ特徴のある人","似ている人"])
             with tab1:
                 st.write(out_text3)
             with tab2:

@@ -31,12 +31,12 @@ def read_json():
         # JSON文字列に変換
         df = pd.DataFrame(users_data)
         # 表示して確認
-        st.sidebar.caption('secretsデータを利用しています')
+        # st.sidebar.caption('secretsデータを利用しています')
     except Exception:
         p = Path(__file__).parent / "out.json"
         if p.exists():
             df = pd.read_json("out.json")
-            st.sidebar.caption('Local csvデータを利用しています')
+        #     st.sidebar.caption('Local csvデータを利用しています')
     if df is None: 
         st.sidebar.caption('データ読み込みエラー')
     return df
@@ -53,11 +53,15 @@ def find_major_commons(name, client, data_json):
 
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
-        f"「{name}」が持つ特徴のうち、他のメンバーと会話が弾みそうな共通点を３つほど教えてください。\n"
-        f"各共通点について、誰と共通しているのかも説明してください。\n"
-        f"回答形式： 前置き無しで結論を記載。締めくくりの言葉は不要。\n"
-        f"文字数： 最大でも300字程度にしてください。\n"
-        f"メンバーとその特徴は、次のJSONを参照してください。\n"
+        f"「{name}」が持つ特徴のうち、他のメンバーも同じような特徴を持つものを３つ教えてください。\n"
+        f"#探索条件: 人数が多い特徴を優先する。話が弾みそうな特徴を優先する。\n"
+        f"#回答形式:\n"
+        f"共通している特徴・キーワードをまず太字で記載。続けて、誰とどのように共通しているか説明する。\n"
+        f"文字数は、最大でも500字程度\n\n"
+        f"前置き無しで結論を記載。締めくくりの言葉は不要。\n\n"
+        f"#回答例（イメージ）\n"
+        f"「温泉」Aさん、Bさんも温泉に興味があるみたい！ Cさん、Dさんも国内旅行が好きだから温泉もよく知っているかもしれないよ！\n\n"
+        f"#参照データ：メンバーとその特徴は、以下のJSONを参照してください。\n"
         f"{data_json}"
         )
     # 決めた内容を元にchatGPTへリクエスト
@@ -84,12 +88,14 @@ def find_similar_person(name, client, data_json):
     placeholder.info("共通点のある人を探索中....")
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
-        f"「{name}」と、共通点が多い人を3人教えてください。"
-        f"回答形式: 共通点の多いの名前を太字で書いたあと、共通や類似するポイントを書いてください。\n"
-        f"文字数: 最大でも300文字程度\n"
+        f"「{name}」と、共通点が多い人を、「似ている人」として5人教えてください。"
+        f"#探索条件: 共通点が多い人が5人見つからない場合は、3人くらいでよいです。\n"
+        f"#回答形式: 共通点の多いの名前を太字で書いたあと、共通や類似するポイントを書いてください。\n"
+        f"#前置きは無しで、名前と理由だけ回答してください。\n"
+        f"#1人につき、100文字から150文字程度にしてください。\n"
         f"#回答例のイメージ\n"
-        f"1人目: たっちゃん\n"
-        f"理由:  \n"
+        f"1位: たっちゃん\n"
+        f"理由: ... \n\n"
         f"#メンバーとその特徴は、次のJSONを参照してください。\n"
         f"{data_json}"
         )
@@ -97,7 +103,7 @@ def find_similar_person(name, client, data_json):
     response =  client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "あなたはJSONデータを解析するAIです。親しみやすいキャラクターです。"},
+            {"role": "system", "content": "あなたはJSONデータを解析するAIです。親しみやすく楽しい口調のキャラクターです。"},
             {"role": "user", "content": request_to_gpt}
         ]
     )
@@ -116,10 +122,12 @@ def find_team_member(name, client, data_json):
     placeholder.info("最適なチーム員を探索中....")
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
-        f"JSONデータを参照して、「{name}」とチームを組むと面白い開発が出来そうな人を教えてください。\n"
-        f"条件: 3人のチームを組むので、あとの2人を提案して、提案した理由を教えてください。\n"
-        f"条件: 毎回同じ回答にならないように、ランダム要素を入れてください。\n"
-        f"文字数: 最大でも300文字程度\n\n"
+        f"「{name}」さんは、これから3人のチームを組んで、ソフトウェアの開発を行います。\n"
+        f"JSONデータを参照して、「{name}」さんと一緒に面白い開発が出来そうな人を教えてください。\n"
+        f"#分析条件: 個人としてだけでなく、3人のチームバランスも考慮してください。\n"
+        f"#分析条件: 毎回同じ回答にならないように、ランダム性を入れてください。\n"
+        f"#回答形式: 前置きはナシで、あと2人のメンバーを提案してください。その後、おすすめした理由を説明してください。"
+        f"文字数は、最大でも500文字程度。\n\n"
         f"#メンバーとその特徴（JSON）\n"
         f"{data_json}"
         )
@@ -127,7 +135,7 @@ def find_team_member(name, client, data_json):
     response =  client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "あなたはJSONデータを解析するAIです。親しみやすいキャラクターです。"},
+            {"role": "system", "content": "あなたはJSONデータを解析するAIです。親しみやすく楽しい口調のキャラクターです。"},
             {"role": "user", "content": request_to_gpt}
         ]
     )
@@ -145,9 +153,11 @@ def search_by_common(common_point, client, data_json):
     placeholder.info("同じ共通点を持つ人を探索中....")
     # ChatGPTを呼び出しスクリプト
     request_to_gpt = (
-        f"JSONデータを参照して、「{common_point}」と同じまたは類似するキーワードを持つ人を探してください。"
-        f"回答形式: (1)名前、(2)その人を選んだ理由説明 の順に、繰り返してください。\n"
-        f"文字数: 1人につき最大80文字程度\n\n"
+        f"JSONデータを参照して、「{common_point}」と似た特徴やキーワードを持つ人を探してください。"
+        f"分析条件: 似たキーワードも対象に含めてください。例えば「阪神ファン」と「甲子園出場」は、どちらも野球に関心がある点で共通しています。\n"
+        f"分析条件: 該当する人は、全員教えてください。"
+        f"回答形式: 名前を太字で書き、その後に選んだ理由を1文で説明してください。これを、全員分、繰り返してください。\n"
+        f"回答形式: 前置きの文章は無しで、名前から書き始めてください。\n\n"
         f"#メンバーとその特徴はデータ（JSON）\n"
         f"{data_json}"
         )
@@ -155,7 +165,7 @@ def search_by_common(common_point, client, data_json):
     response =  client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "あなたはJSONデータを解析するAIです。親しみやすいキャラクターです。"},
+            {"role": "system", "content": "あなたはJSONデータを解析するAIです。親しみやすく楽しい口調のキャラクターです。"},
             {"role": "user", "content": request_to_gpt}
         ]
     )

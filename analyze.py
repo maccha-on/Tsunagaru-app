@@ -21,17 +21,26 @@ from pathlib import Path
 
 
 
+# ローカルのJSONファイル（クラウドの場合は toml形式のデータ）を読み込んで
+# DataFrameとして返す関数。
 def read_json():
+    df = None
     try:
-        # Cloud環境なら st.secrets["DATA"] が使える
-        data_json = st.secrets["MEMBER_DATA_JSON"]
-        st.sidebar.caption('secrets')
+        # TOML形式のSecretsからデータ取得（Pythonのdict/リストとして読み込まれる）
+        users_data = st.secrets["users"]  # [{'Name':..., 'Features':[...]}...]
+        # JSON文字列に変換
+        df = pd.DataFrame(users_data)
+        # 表示して確認
+        st.sidebar.caption('secretsデータを利用しています')
     except Exception:
         p = Path(__file__).parent / "out.json"
         if p.exists():
-            data_json = pd.read_json("out.json")
-            st.sidebar.caption('Local csv')
-    return data_json
+            df = pd.read_json("out.json")
+            st.sidebar.caption('Local csvデータを利用しています')
+    if df is None: 
+        st.sidebar.caption('データ読み込みエラー')
+    return df
+
 
 
 # mode_1-1:共通点探し

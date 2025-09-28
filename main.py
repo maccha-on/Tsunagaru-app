@@ -66,10 +66,20 @@ client = get_openai_client()
 
 
 # 動作モードの選択　# 09/23よこ修正
-mode_1 = "仲間探し"
-mode_2 = "特徴探し"
-mode_3 = "繋がり線(Local実行専用)"
-operation_mode_of = {mode_1,mode_2,mode_3}
+# ローカルかどうかでメニュー変更 25/09/28まっちゃん修正
+env_flg = "local"
+try:
+    env_flg = st.secrets[DEPLOY_ENV] 
+except Exception:
+    print('ローカル環境として実行します。（つながり線モードあり）')
+mode_1 = "仲間を見つける"
+mode_2 = "特徴から探す"
+mode_3 = "繋がり線を描く"
+if env_flg == "local":
+    operation_mode_of = [mode_1,mode_2,mode_3]
+else:
+    operation_mode_of = [mode_1,mode_2]
+
 
 # JSONデータを読み込み、メニューバーに反映
 data_json = analyze.read_json()
@@ -82,6 +92,11 @@ st.markdown(
     """
     <style>
     /* サイドバー全体 */
+    /* ① サイドバーが展開されている時の幅を強制 */
+    [data-testid="stSidebar"][aria-expanded="true"]{
+        width: 350px !important;
+        min-width: 350px !important;
+        }
     [data-testid="stSidebar"] {
         background: #F8D7B3; /* 単一色 */
         color: #444;
@@ -92,7 +107,7 @@ st.markdown(
     }
     /* カード風の囲み */
     [data-testid="stSidebar"] .sidebar-content {
-        background: FFF8F0;
+        background: #FFF8F0;
         border-radius: 16px;  /* 丸みを強める */
         padding: 18px;
         margin-bottom: 20px;
@@ -170,23 +185,21 @@ with st.sidebar:
     st.caption("仲間や繋がりを探そう！")
     # st.sidebar.write("どんな繋がりを見つける？")
     # st.sidebar.pills("選んでください。：",["共通点探し","特徴探し","その他"])
-    operation_mode = st.selectbox("どんな繋がりを見つける？", options=operation_mode_of,index=0)
+    operation_mode = st.selectbox("どんな繋がりを見つける？", options = operation_mode_of, index=0)
     #coice = st.sidebar.radio("選んでください。：",["共通点探し","特徴探し","その他"])
 
     #mode_1:共通点探しを選択した場合のサイドバー表示
     if operation_mode == mode_1:
         # st.write("あなたの仲間について教えて")
         # ニックネームを入力してもらう
-        st.caption('あなたが調べるのは誰？')
-        name = st.selectbox("選んでね", names)
+        name = st.selectbox("あなたの名前を教えて。", names)
         # st.sidebar.selectbox("選んでください。：",["AAA(固定値)","BBB","CCC"])
 
     #mode_2:特徴探しを選択した場合のサイドバー表示
     elif operation_mode == mode_2:
         # st.write("探したい特徴を入力して")
         # 特徴を入力してもらう
-        st.caption('どんな特徴を調べる？')
-        common_point = st.text_input("特徴や趣味を入力")
+        common_point = st.text_input("どんな特徴や趣味の人を探す？")
         #user_features = st.text_input("特徴を入力")
 
     #mode_3:相関図を選択した場合のサイドバー表示
@@ -240,7 +253,7 @@ if search_clicked:
 if st.session_state.search_triggered == False:
     st.image("img/top_image.png")
 else:
-    st.image("img/top_image_2.png", width=300)
+    st.image("img/top_image_2.png", width = 800)
 
 
 
@@ -291,7 +304,10 @@ if search_clicked:
                     font-weight: bold;
                     transform: translateY(-2px);
                 }
-
+                /* サイドバー全体の幅を調整 */
+                [data-testid="stSidebar"] {
+                    width: 500px;  /* デフォルトは約250px */
+                }
                 </style>
                 """,
                 unsafe_allow_html=True
@@ -344,15 +360,11 @@ if search_clicked:
             
         #mode_3:相関図を選択した場合の結果表示
         elif operation_mode == mode_3:
-            mode_3_flg = "Local"
-            try:
-               mode_3_flg = st.secrets[DEPLOY_ENV] 
-            except Exception:
-                print('相関図を描画します。')
-            if mode_3_flg == "cloud":
+            if env_flg == "cloud":
                 tab1 = st.tabs(["相関図"])
                 st.write("クラウドでは未実装のため、ローカル環境で実行お願いします <(_ _)>")
             else:
+                print('相関図を描画します。')
                 # ---- 相関図（network_app の処理を main から呼び出し） ----
                 # 必要JSONを読み込み（重複読み込みを整理：canonical_mapは load_canonical_map で統一）
                 data_records = load_json_any(OUT_NETWORK_JSON)

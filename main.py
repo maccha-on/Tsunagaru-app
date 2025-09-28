@@ -85,6 +85,22 @@ else:
 data_json = analyze.read_json()
 names = data_json["Name"].dropna().unique().tolist()
 
+# --- 外部辞書/データファイルの読み込み（サイドバーの選択肢にも必要） --- 09/28まっと追記
+data_records = load_json_any(OUT_NETWORK_JSON)
+all_names = sorted({str(r.get("Name","")).strip() for r in data_records if str(r.get("Name","")).strip()})
+# data_jsonからPandas DFで名前を取得しているが、ネットワーク図はdata_records（JSONリスト）を使用するため、こちらを優先。
+# 'names' は analyze.read_json() の戻り値から取得済みだが、'all_names'はネットワーク図用に再定義。
+# -------------------------------------------------------------------
+
+# --- ネットワーク図に必要なJSONリストと全メンバーリストを先に読み込む --- 09/28まっと追記
+from os.path import exists
+if exists(OUT_NETWORK_JSON):
+    data_records = load_json_any(OUT_NETWORK_JSON)
+    all_names = sorted({str(r.get("Name","")).strip() for r in data_records if str(r.get("Name","")).strip()})
+else:
+    st.error(f"必須ファイル {OUT_NETWORK_JSON} が見つかりません。")
+    st.stop()
+    
 #---------------------------------------------------
 #  　　　CSSの読み込み（初期表示）　9/27追加　　　
 #---------------------------------------------------
@@ -210,6 +226,12 @@ with st.sidebar:
         graph_height   = st.number_input("グラフ高さ(px)", min_value=400, max_value=1600, value=800, step=50)
         label_font_size = st.number_input("ラベル文字サイズ", min_value=8, max_value=30, value=16, step=1)
         st.divider()
+        # ★ メンバー選択リストをサイドバーに追加（修正） 09/28まっと追加
+        # all_names = sorted({str(r.get("Name","")).strip() for r in data_json.get("records", []) if str(r.get("Name","")).strip()}) # data_jsonから名前リストを構築
+        # all_names は 'search_clicked' の外側で定義されているものを使用
+        selected_people = st.multiselect("表示する人を選択（未選択なら全員）", options=all_names, default=st.session_state.get("selected_people_default", []))
+        st.session_state["selected_people_default"] = selected_people # 選択を保持するためのセッションステート
+        st.divider() # 区切り線を追加
         enable_link_sub1 = st.checkbox("subcategory1一致で“ゆるいつながり”を作る", value=True)
         enable_link_sub2 = st.checkbox("subcategory2一致で“ゆるいつながり”を作る", value=True)
         link_sub1_weight = st.slider("sub1リンクの重み", 0.0, 5.0, 0.6, 0.1)
@@ -379,16 +401,12 @@ if search_clicked:
                 except Exception:
                     SUBCAT_WEIGHTS = {}
 
-                # ---------- サイドバーで選択を確定（再描画で消えないように） ----------
-                all_names = sorted({str(r.get("Name","")).strip() for r in data_records if str(r.get("Name","")).strip()})
-                with st.sidebar.form("network_filter_form", clear_on_submit=False):
-                    st.header("表示パラメータ")
-                    default_selected = st.session_state.get("subset_people", [])
-                    selected_people = st.multiselect("表示する人（未選択なら全員）", options=all_names, default=default_selected)
-                    submitted = st.form_submit_button("探そう")
-                if submitted:
-                    st.session_state["subset_people"] = selected_people if selected_people else None
-                subset = st.session_state.get("subset_people", None)
+                # ---------- メンバー選択処理（大幅に簡略化） ---------- 09/28まっと修正
+                if st.session_state.get("selected_people_default"):
+                    # サイドバーで選択されたリストを取得し、subsetとして利用
+                    subset = st.session_state["selected_people_default"]
+                else:
+                    subset = None
 
                 # ---------- グラフ構築 ----------
                 G = build_graph(
@@ -399,7 +417,16 @@ if search_clicked:
                     enable_link_sub1=enable_link_sub1, enable_link_sub2=enable_link_sub2,
                     link_sub1_weight=link_sub1_weight, link_sub2_weight=link_sub2_weight
                 )
-
+                
+                # もしフィルタで0件なら、明示メッセージを出す（空白/表記ゆれの切り分け用） *メンバー選択時表示用修正 09/28まっと追記
+                if G.number_of_nodes() == 0:
+                    st.warning("選択に一致するメンバーが見つかりませんでした。名前の表記をご確認ください。")
+                    # フォールバックで全員表示したい場合は下を有効化：
+                    # G = build_graph(data_records, min_edge_score, TOKEN_CATEGORY, SUBCAT_WEIGHTS,
+                    #                 CANONICAL_MAP, STOPWORDS, CITY_TO_PREF, PREF_ALIASES, PREF_TO_REGION, REGION_SET,
+                    #                 subset=None, enable_link_sub1=enable_link_sub1, enable_link_sub2=enable_link_sub2,
+                    #                 link_sub1_weight=link_sub1_weight, link_sub2_weight=link_sub2_weight)
+                    
                 # ---------- レイアウト：図＋エッジ一覧 ----------
                 col1, col2 = st.columns([3,2], gap="large")
                 with col1:

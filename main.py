@@ -253,7 +253,7 @@ if search_clicked:
 if st.session_state.search_triggered == False:
     st.image("img/top_image.png")
 else:
-    st.image("img/top_image_2.png", width = 800)
+    st.image("img/top_image_small.png", width = 800)
 
 
 

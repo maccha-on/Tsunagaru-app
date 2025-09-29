@@ -68,11 +68,21 @@ def show_temporary_success(message_holder, message="処理が完了しました�
 env_flg = "local"
 try:
     env_flg = st.secrets[DEPLOY_ENV] 
+    print('Cloud環境として実行します。（つながり線モードなし）')
 except Exception:
     print('ローカル環境として実行します。（つながり線モードあり）')
+
+try:
+    exists(OUT_NETWORK_JSON)
+    print('ローカル環境として実行します。（つながり線モードあり）')
+except:
+    print('Cloud環境として実行します。（つながり線モードなし）')
+    env_flg = "cloud" 
+
 mode_1 = "仲間を見つける"
 mode_2 = "特徴から探す"
 mode_3 = "繋がり線を描く"
+
 if env_flg == "local":
     operation_mode_of = [mode_1,mode_2,mode_3]
     # --- network_app から相関図表示に必要な関数・定数を最小限取り込み --- 25/09/29まっと（コード記載位置変更）

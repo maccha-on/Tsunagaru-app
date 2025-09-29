@@ -23,16 +23,6 @@ load_dotenv()
 # 分析用プログラムの読み込み
 import analyze 
 
-# --- network_app から相関図表示に必要な関数・定数を最小限取り込み --- 25/09/27まっと
-from network_app import (
-    OUT_NETWORK_JSON,  # JSON版で定義されているパス 例: out_network.json
-    CITY_TO_PREF_JSON, PREF_ALIASES_JSON, PREF_TO_REGION_JSON,
-    TOKEN_CATEGORY_JSON, CANONICAL_MAP_JSON, STOPWORDS_JSON, SUBCAT_WEIGHTS_JSON,
-    load_json_any, load_token_category_json, load_kv_from_json, load_stopwords, load_canonical_map, load_subcat_weights_json,
-    build_geo_dicts_from_json, build_graph, show_pyvis
-)
-
-
 # 25/09/21修正
 # ChatGPTクライアントを起動するモジュール
 # APIキーをstreamlit上から拾ってくるコードに差し替え
@@ -88,6 +78,14 @@ if env_flg == "local":
 else:
     operation_mode_of = [mode_1,mode_2]
 
+# --- network_app から相関図表示に必要な関数・定数を最小限取り込み --- 25/09/29まっと(コード位置変更)
+from network_app import (
+    OUT_NETWORK_JSON,  # JSON版で定義されているパス 例: out_network.json
+    CITY_TO_PREF_JSON, PREF_ALIASES_JSON, PREF_TO_REGION_JSON,
+    TOKEN_CATEGORY_JSON, CANONICAL_MAP_JSON, STOPWORDS_JSON, SUBCAT_WEIGHTS_JSON,
+    load_json_any, load_token_category_json, load_kv_from_json, load_stopwords, load_canonical_map, load_subcat_weights_json,
+    build_geo_dicts_from_json, build_graph, show_pyvis
+)
 
 # JSONデータを読み込み、メニューバーに反映
 data_json = analyze.read_json()

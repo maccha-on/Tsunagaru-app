@@ -83,6 +83,22 @@ if env_flg == "local":
         load_json_any, load_token_category_json, load_kv_from_json, load_stopwords, load_canonical_map, load_subcat_weights_json,
         build_geo_dicts_from_json, build_graph, show_pyvis
     )
+    
+    # --- 外部辞書/データファイルの読み込み（サイドバーの選択肢にも必要） --- 09/28まっと追記
+    data_records = load_json_any(OUT_NETWORK_JSON)
+    all_names = sorted({str(r.get("Name","")).strip() for r in data_records if str(r.get("Name","")).strip()})
+    # data_jsonからPandas DFで名前を取得しているが、ネットワーク図はdata_records（JSONリスト）を使用するため、こちらを優先。
+    # 'names' は analyze.read_json() の戻り値から取得済みだが、'all_names'はネットワーク図用に再定義。
+    # -------------------------------------------------------------------
+
+    # --- ネットワーク図に必要なJSONリストと全メンバーリストを先に読み込む --- 09/28まっと追記
+    from os.path import exists
+    if exists(OUT_NETWORK_JSON):
+        data_records = load_json_any(OUT_NETWORK_JSON)
+        all_names = sorted({str(r.get("Name","")).strip() for r in data_records if str(r.get("Name","")).strip()})
+    else:
+        st.error(f"必須ファイル {OUT_NETWORK_JSON} が見つかりません。")
+        st.stop()
 else:
     operation_mode_of = [mode_1,mode_2]
 
@@ -90,22 +106,6 @@ else:
 # JSONデータを読み込み、メニューバーに反映
 data_json = analyze.read_json()
 names = data_json["Name"].dropna().unique().tolist()
-
-# --- 外部辞書/データファイルの読み込み（サイドバーの選択肢にも必要） --- 09/28まっと追記
-data_records = load_json_any(OUT_NETWORK_JSON)
-all_names = sorted({str(r.get("Name","")).strip() for r in data_records if str(r.get("Name","")).strip()})
-# data_jsonからPandas DFで名前を取得しているが、ネットワーク図はdata_records（JSONリスト）を使用するため、こちらを優先。
-# 'names' は analyze.read_json() の戻り値から取得済みだが、'all_names'はネットワーク図用に再定義。
-# -------------------------------------------------------------------
-
-# --- ネットワーク図に必要なJSONリストと全メンバーリストを先に読み込む --- 09/28まっと追記
-from os.path import exists
-if exists(OUT_NETWORK_JSON):
-    data_records = load_json_any(OUT_NETWORK_JSON)
-    all_names = sorted({str(r.get("Name","")).strip() for r in data_records if str(r.get("Name","")).strip()})
-else:
-    st.error(f"必須ファイル {OUT_NETWORK_JSON} が見つかりません。")
-    st.stop()
     
 #---------------------------------------------------
 #  　　　CSSの読み込み（初期表示）　9/27追加　　　

@@ -13,6 +13,8 @@ import pandas as pd
 import requests #JSON用
 from openai import OpenAI
 import os
+import base64
+import time
 
 # .env読み込みのため追加
 from dotenv import load_dotenv
@@ -64,6 +66,12 @@ def get_openai_client():
     return OpenAI(api_key=api_key)
 client = get_openai_client()
 
+# 処理中に表示するgifを非表示にする関数　09/29よこ修正
+def show_temporary_success(message_holder, message="処理が完了しました！", delay=0.3):
+    gif_holder.empty()
+    message_holder.success(message)
+    time.sleep(delay)
+    message_holder.empty()
 
 # 動作モードの選択　# 09/23よこ修正
 # ローカルかどうかでメニュー変更 25/09/28まっちゃん修正
@@ -197,7 +205,7 @@ st.markdown(
 #  　　　サイドバー ここから　　　　
 #-------------------------------
 with st.sidebar:
-    st.title("つながるアプリ")
+    st.title("なかまっぷ") #09/29よこ修正
     st.caption("仲間や繋がりを探そう！")
     # st.sidebar.write("どんな繋がりを見つける？")
     # st.sidebar.pills("選んでください。：",["共通点探し","特徴探し","その他"])
@@ -222,8 +230,8 @@ with st.sidebar:
     elif operation_mode == mode_3:
         st.caption('繋がりを線で描こう')
         st.header("表示パラメータ")
-        min_edge_score = st.slider("エッジ採用しきい値（合計スコア）", 0.0, 20.0, 2.0, 0.5)
-        graph_height   = st.number_input("グラフ高さ(px)", min_value=400, max_value=1600, value=800, step=50)
+        min_edge_score = st.slider("エッジ採用しきい値（合計スコア）", 0.0, 20.0, 6.0, 0.5) #初期表示を2.0から6.0に修正09/29よこ修正
+        graph_height   = st.number_input("グラフ高さ(px)", min_value=400, max_value=1600, value=400, step=50) #初期表示を800から400に修正09/29よこ修正
         label_font_size = st.number_input("ラベル文字サイズ", min_value=8, max_value=30, value=16, step=1)
         st.divider()
         # ★ メンバー選択リストをサイドバーに追加（修正） 09/28まっと追加
@@ -277,6 +285,26 @@ if st.session_state.search_triggered == False:
 else:
     st.image("img/top_image_small.png", width = 800)
 
+#---------------------------------------------
+#  　　　処理中のgifの表示 #09/29よこ修正
+#---------------------------------------------
+
+# GIFをbase64で読み込む
+with open("img/walking_flag_10.gif", "rb") as file_:
+    contents = file_.read()
+    data_url = base64.b64encode(contents).decode("utf-8")
+
+# プレースホルダーを用意
+gif_holder = st.empty()
+message_holder = st.empty()
+
+# ボタンを押したらGIFを表示して処理開始
+if search_clicked:
+    # GIFを表示（HTMLで埋め込み）
+    gif_holder.markdown(
+        f'<img src="data:image/gif;base64,{data_url}" alt="loading gif" width="300">', 
+        unsafe_allow_html=True
+    )
 
 
 # データ分析を実行し、表示
@@ -335,6 +363,9 @@ if search_clicked:
                 unsafe_allow_html=True
             )
 
+            # 処理完了後にGIFを非表示する関数を呼び出す 09/29よこ修正
+            show_temporary_success(message_holder,"仲間が見つかりました！",delay=0.3)
+            
             # 関数の取得結果を表示
             # 09/28 出力エリアをカード形式に変更
             tab1, tab2, tab3 = st.tabs(["みんなとの共通点","似ている人","チーム提案"])
@@ -369,6 +400,9 @@ if search_clicked:
             #特徴を取得する関数を呼び出す
             out_text3 = analyze.search_by_common(common_point, client, data_json)
 
+            # 処理完了後にGIFを非表示する関数を呼び出す 09/29よこ修正
+            show_temporary_success(message_holder,"仲間が見つかりました！",delay=0.3)
+
             #関数の取得結果を表示
             # 09/28 出力エリアをカード形式に変更
             #st.write(out_text3)
@@ -385,6 +419,8 @@ if search_clicked:
             if env_flg == "cloud":
                 tab1 = st.tabs(["相関図"])
                 st.write("クラウドでは未実装のため、ローカル環境で実行お願いします <(_ _)>")
+                # 処理完了後にGIFを非表示する関数を呼び出す 09/29よこ修正
+                show_temporary_success(message_holder,"ローカル環境で実行お願いします",delay=0.5)
             else:
                 print('相関図を描画します。')
                 # ---- 相関図（network_app の処理を main から呼び出し） ----
@@ -428,12 +464,17 @@ if search_clicked:
                     #                 link_sub1_weight=link_sub1_weight, link_sub2_weight=link_sub2_weight)
                     
                 # ---------- レイアウト：図＋エッジ一覧 ----------
-                col1, col2 = st.columns([3,2], gap="large")
+                # 処理完了後にGIFを非表示する関数を呼び出す 09/29よこ修正
+                show_temporary_success(message_holder,"繋がりを見つけたよ",delay=0.5)
+
+                col1, col2 = st.columns([3,3], gap="large")# タイトルが収まるように表示を半々に修正 09/29よこ修正
                 with col1:
                     st.subheader("ネットワーク図")
+                    st.caption("趣味や特徴の傾向が似ている仲間を繋げました")# 説明を追加 09/29よこ修正
                     show_pyvis(G, height_px=int(graph_height), label_font_size=int(label_font_size))
                 with col2:
                     st.subheader("エッジ一覧（重い順）")
+                    st.caption("特徴が似ている仲間を順番に表示しています")# 説明を追加 09/29よこ修正
                     if G.number_of_edges() == 0:
                         st.info("エッジがありません。選択メンバーやしきい値を見直してください。")
                     else:

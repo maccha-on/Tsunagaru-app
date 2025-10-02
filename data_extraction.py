@@ -4,7 +4,6 @@ import requests
 from bs4 import BeautifulSoup
 from openai import OpenAI
 import os
-import reformat
 
 # ############### data_extraction.pyの説明 ################
 #
@@ -144,7 +143,11 @@ for index, row in input_df.iterrows():
 
     # 名前の格納
     name_value = row.get('Name', '')
-    name = str(name_value).strip() if has_text(name_value) else ''
+    # 文字列が有効かチェック
+    name = str(name_value).strip() if has_text(name_value) else '名無しさん'
+    # ニックネームの取りだし。"/" で分割し、スラッシュが2つある (=分割後に3要素ある) 場合のみ真ん中を取る
+    if isinstance(name, str) and name.count('/') ==2:
+        name = name.split('/')[1] 
     out_df.loc[out_index, 'Name'] = name
     scraping_df.loc[out_index, 'Name'] = name
 
@@ -158,7 +161,7 @@ for index, row in input_df.iterrows():
             feature_list = [kw.strip() for kw in intro_features.split(',') if kw.strip()]
 
     # スクレイピング処理
-    print(f"{index}: {name} さんURLをスクレイピング中...")
+    print(f"{index}: {name}さんのURLからスクレイピング中...")
     try:
         lp_text = fetch_lp_text(row['URL'])
     except Exception as exc:

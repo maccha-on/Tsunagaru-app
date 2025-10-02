@@ -1,4 +1,3 @@
-
 # ######################## main.pyの説明 ##########################
 # 
 # フロントエンドの処理は、main.py内に記載する。
@@ -65,24 +64,28 @@ def show_temporary_success(message_holder, message="処理が完了しました�
 
 # 動作モードの選択　# 09/23よこ修正
 # ローカルかどうかでメニュー変更 25/09/28まっちゃん修正
-env_flg = "local"
 try:
-    env_flg = st.secrets[DEPLOY_ENV] 
+    env_flg = st.secrets[DEPLOY_ENV]  # type: ignore
     print('Cloud環境として実行します。（つながり線モードなし）')
+    st.sidebar.caption('クラウド実行モード')
 except Exception:
+    env_flg = "local"
     print('ローカル環境として実行します。（つながり線モードあり）')
-
-try:
-    exists(OUT_NETWORK_JSON)
-    print('ローカル環境として実行します。（つながり線モードあり）')
-except:
-    print('Cloud環境として実行します。（つながり線モードなし）')
-    env_flg = "cloud" 
+    st.sidebar.caption('ローカル実行モード')
+    # 25/10/02 上の場合分けと重複感があるため、コメントアウトしました。
+    # きちんと例外処理を実装するなら、全jsonファイルを走査した方が良さそうです。
+    # try:
+    #     OUT_NETWORK_JSON = "out_network.json" 
+    #     exists(OUT_NETWORK_JSON)
+    # except:
+    #     print('エラー発生したため、つながり線モードなしで実行します。')
 
 mode_1 = "仲間を見つける"
 mode_2 = "特徴から探す"
 mode_3 = "繋がり線を描く"
 
+
+## モード3 繋がり線機能の前処理
 if env_flg == "local":
     operation_mode_of = [mode_1,mode_2,mode_3]
     # --- network_app から相関図表示に必要な関数・定数を最小限取り込み --- 25/09/29まっと（コード記載位置変更）
@@ -113,10 +116,13 @@ else:
     operation_mode_of = [mode_1,mode_2]
 
 
-# JSONデータを読み込み、メニューバーに反映
+
+# モード1,2用にJSONデータを読み込み、メニューバーに反映
 data_json = analyze.read_json()
 names = data_json["Name"].dropna().unique().tolist()
-    
+
+
+
 #---------------------------------------------------
 #  　　　CSSの読み込み（初期表示）　9/27追加　　　
 #---------------------------------------------------

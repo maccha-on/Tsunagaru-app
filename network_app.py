@@ -4,6 +4,7 @@ import pandas as pd
 import networkx as nx
 from pyvis.network import Network
 import streamlit as st
+import os
 
 # --------------------------------------------------------
 # 固定ファイル名（JSON）

@@ -64,6 +64,7 @@ def show_temporary_success(message_holder, message="処理が完了しました�
 
 # 動作モードの選択　# 09/23よこ修正
 # ローカルかどうかでメニュー変更 25/09/28まっちゃん修正
+env_flg = ''
 try:
     env_flg = st.secrets[DEPLOY_ENV]  # type: ignore
     st.sidebar.caption('クラウド実行モード')
@@ -87,30 +88,33 @@ mode_3 = "繋がり線を描く"
 ## モード3 繋がり線機能の前処理
 if env_flg == "local":
     operation_mode_of = [mode_1,mode_2,mode_3]
-    # --- network_app から相関図表示に必要な関数・定数を最小限取り込み --- 25/09/29まっと（コード記載位置変更）
-    from network_app import (
-        OUT_NETWORK_JSON,  # JSON版で定義されているパス 例: out_network.json
-        CITY_TO_PREF_JSON, PREF_ALIASES_JSON, PREF_TO_REGION_JSON,
-        TOKEN_CATEGORY_JSON, CANONICAL_MAP_JSON, STOPWORDS_JSON, SUBCAT_WEIGHTS_JSON,
-        load_json_any, load_token_category_json, load_kv_from_json, load_stopwords, load_canonical_map, load_subcat_weights_json,
-        build_geo_dicts_from_json, build_graph, show_pyvis
-    )
-    
-    # --- 外部辞書/データファイルの読み込み（サイドバーの選択肢にも必要） --- 09/28まっと追記
-    data_records = load_json_any(OUT_NETWORK_JSON)
-    all_names = sorted({str(r.get("Name","")).strip() for r in data_records if str(r.get("Name","")).strip()})
-    # data_jsonからPandas DFで名前を取得しているが、ネットワーク図はdata_records（JSONリスト）を使用するため、こちらを優先。
-    # 'names' は analyze.read_json() の戻り値から取得済みだが、'all_names'はネットワーク図用に再定義。
-    # -------------------------------------------------------------------
-
-    # --- ネットワーク図に必要なJSONリストと全メンバーリストを先に読み込む --- 09/28まっと追記
-    from os.path import exists
-    if exists(OUT_NETWORK_JSON):
+    try:
+        # --- network_app から相関図表示に必要な関数・定数を最小限取り込み --- 25/09/29まっと（コード記載位置変更）
+        from network_app import (
+            OUT_NETWORK_JSON,  # JSON版で定義されているパス 例: out_network.json
+            CITY_TO_PREF_JSON, PREF_ALIASES_JSON, PREF_TO_REGION_JSON,
+            TOKEN_CATEGORY_JSON, CANONICAL_MAP_JSON, STOPWORDS_JSON, SUBCAT_WEIGHTS_JSON,
+            load_json_any, load_token_category_json, load_kv_from_json, load_stopwords, load_canonical_map, load_subcat_weights_json,
+            build_geo_dicts_from_json, build_graph, show_pyvis
+        )
+        
+        # --- 外部辞書/データファイルの読み込み（サイドバーの選択肢にも必要） --- 09/28まっと追記
         data_records = load_json_any(OUT_NETWORK_JSON)
         all_names = sorted({str(r.get("Name","")).strip() for r in data_records if str(r.get("Name","")).strip()})
-    else:
-        st.error(f"必須ファイル {OUT_NETWORK_JSON} が見つかりません。")
-        st.stop()
+        # data_jsonからPandas DFで名前を取得しているが、ネットワーク図はdata_records（JSONリスト）を使用するため、こちらを優先。
+        # 'names' は analyze.read_json() の戻り値から取得済みだが、'all_names'はネットワーク図用に再定義。
+        # -------------------------------------------------------------------
+
+        # --- ネットワーク図に必要なJSONリストと全メンバーリストを先に読み込む --- 09/28まっと追記
+        from os.path import exists
+        if exists(OUT_NETWORK_JSON):
+            data_records = load_json_any(OUT_NETWORK_JSON)
+            all_names = sorted({str(r.get("Name","")).strip() for r in data_records if str(r.get("Name","")).strip()})
+        else:
+            st.error(f"必須ファイル {OUT_NETWORK_JSON} が見つかりません。")
+            st.stop()
+    except Exception:
+        print('ローカル環境ですが必要ファイルが見つかりません。')
 else:
     operation_mode_of = [mode_1,mode_2]
 

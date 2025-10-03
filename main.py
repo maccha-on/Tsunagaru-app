@@ -64,6 +64,7 @@ def show_temporary_success(message_holder, message="処理が完了しました�
 
 # 動作モードの選択　# 09/23よこ修正
 # ローカルかどうかでメニュー変更 25/09/28まっちゃん修正
+env_flg = ''
 try:
     env_flg = st.secrets[DEPLOY_ENV]  # type: ignore
     st.sidebar.caption('クラウド実行モード')

@@ -66,7 +66,6 @@ def show_temporary_success(message_holder, message="処理が完了しました�
 # ローカルかどうかでメニュー変更 25/09/28まっちゃん修正
 try:
     env_flg = st.secrets[DEPLOY_ENV]  # type: ignore
-    print('Cloud環境として実行します。（つながり線モードなし）')
     st.sidebar.caption('クラウド実行モード')
 except Exception:
     env_flg = "local"

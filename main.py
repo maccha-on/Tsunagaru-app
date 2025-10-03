@@ -66,7 +66,7 @@ def show_temporary_success(message_holder, message="処理が完了しました�
 # ローカルかどうかでメニュー変更 25/09/28まっちゃん修正
 env_flg = ''
 try:
-    env_flg = st.secrets[DEPLOY_ENV]  # type: ignore
+    env_flg = st.secrets["DEPLOY_ENV"]
     st.sidebar.caption('クラウド実行モード')
 except Exception:
     env_flg = "local"

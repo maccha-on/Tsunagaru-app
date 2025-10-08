@@ -220,7 +220,7 @@ print("DataFrameをout.jsonに出力しました")
 
 # ---------------- TOML化 ---------------------------
 # DataFrame を辞書形式に変換
-data_dict = features_df.to_dict(orient='records')
+data_dict = out_df.to_dict(orient='records')
 
 # TOML 形式用にラップ（好みでキー名を指定）
 toml_data = {"users": data_dict}

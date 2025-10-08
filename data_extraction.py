@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 from openai import OpenAI
 import os
+import toml
 
 # ############### data_extraction.pyの説明 ################
 #
@@ -214,6 +215,23 @@ df_json["Features"] = df_json["Features"].apply(lambda x: [item.strip() for item
 # force_ascii=False → 日本語をそのまま出力
 df_json.to_json("out.json", orient="records", force_ascii=False, indent=4)
 print("DataFrameをout.jsonに出力しました")
+
+
+
+# ---------------- TOML化 ---------------------------
+# DataFrame を辞書形式に変換
+data_dict = features_df.to_dict(orient='records')
+
+# TOML 形式用にラップ（好みでキー名を指定）
+toml_data = {"users": data_dict}
+
+# ファイルに保存する場合
+with open("out.toml", "w", encoding="utf-8") as f:
+    toml.dump(toml_data, f)
+
+print('out.toml出力しました。')
+
+
 
 
 # -------------ワンホット化（カンマ区切りを列に展開して0/1化）---------------
